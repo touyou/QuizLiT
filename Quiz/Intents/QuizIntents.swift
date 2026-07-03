@@ -60,7 +60,7 @@ struct StartCategoryQuizIntent: AppIntent {
 /// AI 生成クイズを開始する。
 struct StartAIQuizIntent: AppIntent {
     static let title: LocalizedStringResource = "AIクイズを開始"
-    static let description = IntentDescription("Apple Intelligence が作るオリジナル問題に挑戦します。")
+    static let description = IntentDescription("オンデバイスAIが作るオリジナル問題に挑戦します。")
     static var openAppWhenRun: Bool { true }
 
     @MainActor
