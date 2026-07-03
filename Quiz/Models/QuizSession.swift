@@ -21,7 +21,9 @@ final class QuizSession: Identifiable {
         self.questions = questions
     }
 
-    var current: Question { questions[index] }
+    /// 現在の問題。進行が末尾を越えた場合（結果画面への遷移アニメーション中など）は
+    /// 範囲外アクセスを避けるため末尾の問題を返す。
+    var current: Question { questions[min(index, questions.count - 1)] }
     var total: Int { questions.count }
     /// 1 始まりの現在の問題番号。
     var questionNumber: Int { index + 1 }
@@ -40,5 +42,12 @@ final class QuizSession: Identifiable {
     func advance() {
         selectedChoice = nil
         index += 1
+    }
+
+    /// 同じ問題セットで最初からやり直す。
+    func restart() {
+        index = 0
+        correctCount = 0
+        selectedChoice = nil
     }
 }

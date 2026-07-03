@@ -19,11 +19,9 @@ struct QuizView: View {
 
             questionCard
 
-            GlassEffectContainer(spacing: 12) {
-                VStack(spacing: 12) {
-                    ForEach(Array(session.current.choices.enumerated()), id: \.offset) { index, choice in
-                        choiceButton(index: index, text: choice)
-                    }
+            VStack(spacing: 12) {
+                ForEach(Array(session.current.choices.enumerated()), id: \.offset) { index, choice in
+                    choiceButton(index: index, text: choice)
                 }
             }
 
@@ -40,8 +38,8 @@ struct QuizView: View {
                         .padding(.vertical, 6)
                 }
                 .buttonStyle(.glassProminent)
-                .tint(.white)
-                .foregroundStyle(.indigo)
+                .tint(.indigo)
+                .foregroundStyle(.white)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
@@ -56,7 +54,7 @@ struct QuizView: View {
                         .padding(10)
                 }
                 .buttonStyle(.glass)
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 Spacer()
             }
             .padding(.horizontal, 24)
@@ -70,25 +68,25 @@ struct QuizView: View {
             HStack {
                 Label(session.current.category.title, systemImage: session.current.category.systemImage)
                     .font(.caption.bold())
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Text("第 \(session.questionNumber) 問 / \(session.total) 問")
                     .font(.caption.bold())
-                    .foregroundStyle(.white.opacity(0.85))
+                    .foregroundStyle(.secondary)
             }
             ProgressView(value: Double(session.questionNumber), total: Double(session.total))
-                .tint(.white)
+                .tint(.indigo)
         }
     }
 
     private var questionCard: some View {
         Text(session.current.text)
             .font(.title3.weight(.semibold))
-            .foregroundStyle(.white)
+            .foregroundStyle(.primary)
             .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(24)
-            .glassEffect(.regular, in: .rect(cornerRadius: 24))
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 24))
     }
 
     private func choiceButton(index: Int, text: String) -> some View {
@@ -105,12 +103,18 @@ struct QuizView: View {
                         .font(.title3)
                 }
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(foreground(for: index))
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .background(background(for: index), in: .rect(cornerRadius: 18))
+            .overlay {
+                if let tint = tint(for: index) {
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(tint, lineWidth: 2)
+                }
+            }
         }
         .buttonStyle(.plain)
-        .glassEffect(glass(for: index), in: .rect(cornerRadius: 18))
         .disabled(isAnswered)
     }
 
@@ -124,11 +128,15 @@ struct QuizView: View {
         return nil
     }
 
-    private func glass(for index: Int) -> Glass {
+    private func background(for index: Int) -> Color {
         if let tint = tint(for: index) {
-            return .regular.tint(tint)
+            return tint.opacity(0.18)
         }
-        return isAnswered ? .regular : .regular.interactive()
+        return Color(.secondarySystemGroupedBackground)
+    }
+
+    private func foreground(for index: Int) -> Color {
+        tint(for: index) ?? .primary
     }
 
     private func resultIcon(for index: Int) -> String? {

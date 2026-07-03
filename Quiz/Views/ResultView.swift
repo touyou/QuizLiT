@@ -21,40 +21,53 @@ struct ResultView: View {
 
             Image(systemName: symbolName)
                 .font(.system(size: 72))
-                .foregroundStyle(.white)
+                .foregroundStyle(.indigo)
                 .symbolEffect(.bounce, value: session.id)
 
             Text("結果発表")
                 .font(.title.bold())
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
 
             VStack(spacing: 8) {
                 Text("\(session.correctCount) / \(session.total) 問正解")
                     .font(.system(size: 40, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
 
                 Text(comment)
                     .font(.headline)
-                    .foregroundStyle(.white.opacity(0.9))
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             .padding(32)
             .frame(maxWidth: .infinity)
-            .glassEffect(.regular, in: .rect(cornerRadius: 28))
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 28))
 
             Spacer()
 
-            Button {
-                onExit()
-            } label: {
-                Label("もう一度チャレンジ", systemImage: "arrow.counterclockwise")
-                    .font(.title3.bold())
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
+            VStack(spacing: 12) {
+                Button {
+                    withAnimation(.snappy) { session.restart() }
+                } label: {
+                    Label("もう一度チャレンジ", systemImage: "arrow.counterclockwise")
+                        .font(.title3.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                }
+                .buttonStyle(.glassProminent)
+                .tint(.indigo)
+                .foregroundStyle(.white)
+
+                Button {
+                    onExit()
+                } label: {
+                    Text("ホームに戻る")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
             }
-            .buttonStyle(.glassProminent)
-            .tint(.white)
-            .foregroundStyle(.indigo)
         }
         .padding(24)
     }

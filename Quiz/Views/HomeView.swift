@@ -10,7 +10,6 @@ import SwiftUI
 struct HomeView: View {
     @State private var selection: Set<QuizCategory> = []
     @State private var session: QuizSession?
-    @Namespace private var glassNamespace
 
     var body: some View {
         ZStack {
@@ -19,16 +18,13 @@ struct HomeView: View {
             VStack(spacing: 24) {
                 header
 
-                GlassEffectContainer(spacing: 16) {
-                    VStack(spacing: 16) {
-                        ForEach(QuizCategory.allCases) { category in
-                            CategoryCard(
-                                category: category,
-                                isSelected: selection.contains(category)
-                            ) {
-                                toggle(category)
-                            }
-                            .glassEffectID(category, in: glassNamespace)
+                VStack(spacing: 16) {
+                    ForEach(QuizCategory.allCases) { category in
+                        CategoryCard(
+                            category: category,
+                            isSelected: selection.contains(category)
+                        ) {
+                            toggle(category)
                         }
                     }
                 }
@@ -57,13 +53,9 @@ struct HomeView: View {
                 .frame(height: 96)
                 .padding(.top, 24)
 
-            Text("Programming Quiz")
-                .font(.largeTitle.bold())
-                .foregroundStyle(.white)
-
             Text("挑戦するジャンルを選んでスタート")
                 .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.8))
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -77,8 +69,8 @@ struct HomeView: View {
                 .padding(.vertical, 6)
         }
         .buttonStyle(.glassProminent)
-        .tint(.white)
-        .foregroundStyle(.indigo)
+        .tint(.indigo)
+        .foregroundStyle(.white)
         .disabled(selection.isEmpty)
         .opacity(selection.isEmpty ? 0.5 : 1)
         .animation(.easeInOut, value: selection.isEmpty)
@@ -103,7 +95,7 @@ struct HomeView: View {
     }
 }
 
-/// カテゴリ選択カード。Liquid Glass で選択状態を表現する。
+/// カテゴリ選択カード。選択状態は枠線とチェックで表現する。
 private struct CategoryCard: View {
     let category: QuizCategory
     let isSelected: Bool
@@ -114,10 +106,12 @@ private struct CategoryCard: View {
             HStack(spacing: 16) {
                 Image(systemName: category.systemImage)
                     .font(.title2)
+                    .foregroundStyle(category.tint)
                     .frame(width: 36)
 
                 Text(category.title)
                     .font(.headline)
+                    .foregroundStyle(.primary)
 
                 Spacer()
 
@@ -125,15 +119,15 @@ private struct CategoryCard: View {
                     .font(.title3)
                     .foregroundStyle(isSelected ? category.tint : .secondary)
             }
-            .foregroundStyle(.white)
             .padding(20)
             .frame(maxWidth: .infinity)
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 22))
+            .overlay {
+                RoundedRectangle(cornerRadius: 22)
+                    .stroke(category.tint, lineWidth: isSelected ? 2 : 0)
+            }
         }
         .buttonStyle(.plain)
-        .glassEffect(
-            isSelected ? .regular.tint(category.tint).interactive() : .regular.interactive(),
-            in: .rect(cornerRadius: 22)
-        )
     }
 }
 
