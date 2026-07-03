@@ -8,12 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		1A2B3C4D5E6F000000000012 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 1A2B3C4D5E6F000000000011 /* GoogleMobileAds */; };
-		46229BA82FF7DDFA0043E4FD /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 46229BA72FF7DDFA0043E4FD /* AppIcon.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		1A2B3C4D5E6F000000000005 /* Quiz.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Quiz.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		46229BA72FF7DDFA0043E4FD /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -45,7 +43,6 @@
 		1A2B3C4D5E6F000000000002 = {
 			isa = PBXGroup;
 			children = (
-				46229BA72FF7DDFA0043E4FD /* AppIcon.icon */,
 				1A2B3C4D5E6F000000000006 /* Quiz */,
 				1A2B3C4D5E6F000000000003 /* Products */,
 			);
@@ -128,7 +125,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				46229BA82FF7DDFA0043E4FD /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
