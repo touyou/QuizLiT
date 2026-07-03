@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var generator = QuizGenerator()
     @State private var aiTheme: String = ""
     @State private var genError: String?
+    @State private var adLoaded = false
     @FocusState private var themeFocused: Bool
 
     private let launcher = QuizLauncher.shared
@@ -44,10 +45,13 @@ struct HomeView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .safeAreaInset(edge: .bottom) {
-                AdBannerView(adUnitID: AdUnit.homeBanner)
-                    .frame(height: 50)
-                    .frame(maxWidth: .infinity)
-                    .background(Color(.systemGroupedBackground))
+                AdBannerView(adUnitID: AdUnit.homeBanner) { loaded in
+                    withAnimation(.easeInOut) { adLoaded = loaded }
+                }
+                .frame(height: adLoaded ? 50 : 0)
+                .frame(maxWidth: .infinity)
+                .opacity(adLoaded ? 1 : 0)
+                .clipped()
             }
         }
         .overlay {
