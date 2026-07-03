@@ -1,9 +1,45 @@
 {
+  "features" : [
+    "specular-location"
+  ],
   "fill" : {
-    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+    "automatic-gradient" : "display-p3:0.94922,0.94922,0.96875,1.00000"
   },
   "groups" : [
-
+    {
+      "blur-material" : 0.5,
+      "layers" : [
+        {
+          "blend-mode" : "normal",
+          "fill" : "automatic",
+          "glass" : true,
+          "image-name" : "icon 2.png",
+          "name" : "icon 2",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              86.5,
+              -58.828125
+            ]
+          }
+        }
+      ],
+      "lighting" : "combined",
+      "refractivity" : {
+        "depth" : 0,
+        "enabled" : false,
+        "strength" : 0.421328125
+      },
+      "shadow" : {
+        "kind" : "layer-color",
+        "opacity" : 0.6
+      },
+      "specular" : "inside",
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.2
+      }
+    }
   ],
   "supported-platforms" : {
     "circles" : [
