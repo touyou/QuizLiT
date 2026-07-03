@@ -44,6 +44,7 @@ struct QuizView: View {
             }
         }
         .padding(24)
+        .readableWidth()
         .safeAreaInset(edge: .top) {
             HStack {
                 Button {

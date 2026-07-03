@@ -70,6 +70,7 @@ struct ResultView: View {
             }
         }
         .padding(24)
+        .readableWidth()
     }
 
     private var symbolName: String {

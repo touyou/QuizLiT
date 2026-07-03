@@ -42,6 +42,7 @@ struct HomeView: View {
                     aiSection
                 }
                 .padding(24)
+                .readableWidth()
             }
             .scrollDismissesKeyboard(.interactively)
             .safeAreaInset(edge: .bottom) {
