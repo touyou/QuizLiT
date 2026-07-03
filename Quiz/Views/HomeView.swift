@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var generator = QuizGenerator()
     @State private var aiTheme: String = ""
     @State private var genError: String?
+    @FocusState private var themeFocused: Bool
 
     private let launcher = QuizLauncher.shared
 
@@ -20,31 +21,33 @@ struct HomeView: View {
         ZStack {
             BackgroundView()
 
-            VStack(spacing: 0) {
-                ScrollView {
-                    VStack(spacing: 24) {
-                        header
+            ScrollView {
+                VStack(spacing: 24) {
+                    header
 
-                        VStack(spacing: 16) {
-                            ForEach(QuizCategory.allCases) { category in
-                                CategoryCard(
-                                    category: category,
-                                    isSelected: selection.contains(category)
-                                ) {
-                                    toggle(category)
-                                }
+                    VStack(spacing: 16) {
+                        ForEach(QuizCategory.allCases) { category in
+                            CategoryCard(
+                                category: category,
+                                isSelected: selection.contains(category)
+                            ) {
+                                toggle(category)
                             }
                         }
-
-                        startButton
-
-                        aiSection
                     }
-                    .padding(24)
-                }
 
+                    startButton
+
+                    aiSection
+                }
+                .padding(24)
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .safeAreaInset(edge: .bottom) {
                 AdBannerView(adUnitID: AdUnit.homeBanner)
                     .frame(height: 50)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(.systemGroupedBackground))
             }
         }
         .overlay {
@@ -101,15 +104,27 @@ struct HomeView: View {
                 .foregroundStyle(.primary)
 
             if QuizGenerator.isAvailable {
-                Text("テーマを入力すると、Apple Intelligence がオリジナル問題を作ります。")
+                Text("テーマを入力すると、オンデバイスAIがオリジナル問題を作ります。問題文・選択肢・正誤は自動生成のため誤りを含むことがあり、正しさは保証されません。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 TextField("例: SwiftUI、再帰、正規表現", text: $aiTheme)
+                    .focused($themeFocused)
                     .padding(14)
                     .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
                     .submitLabel(.go)
                     .onSubmit { Task { await startAI() } }
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button {
+                                Task { await startAI() }
+                            } label: {
+                                Label("問題を作る", systemImage: "wand.and.stars")
+                            }
+                            .disabled(generator.isGenerating)
+                        }
+                    }
 
                 Button {
                     Task { await startAI() }
@@ -124,7 +139,7 @@ struct HomeView: View {
                 .foregroundStyle(.white)
                 .disabled(generator.isGenerating)
             } else {
-                Text("この端末では AI 出題を利用できません（Apple Intelligence が必要です）。")
+                Text("この端末では AI 出題を利用できません。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -174,6 +189,7 @@ struct HomeView: View {
 
     private func startAI() async {
         guard !generator.isGenerating else { return }
+        themeFocused = false
         genError = nil
         do {
             let questions = try await generator.makeQuestions(theme: aiTheme)

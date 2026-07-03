@@ -76,6 +76,13 @@ struct QuizView: View {
             }
             ProgressView(value: Double(session.questionNumber), total: Double(session.total))
                 .tint(.indigo)
+
+            if session.current.category == nil {
+                Text("AI生成のため、内容に誤りを含む場合があります。")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
     }
 
