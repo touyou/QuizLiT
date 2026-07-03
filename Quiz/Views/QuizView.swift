@@ -66,7 +66,7 @@ struct QuizView: View {
     private var progress: some View {
         VStack(spacing: 8) {
             HStack {
-                Label(session.current.category.title, systemImage: session.current.category.systemImage)
+                Label(session.current.topicTitle, systemImage: session.current.topicSymbol)
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
                 Spacer()

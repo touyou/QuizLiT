@@ -46,9 +46,26 @@ enum QuizCategory: String, CaseIterable, Identifiable {
 /// 一問分のクイズ。
 struct Question: Identifiable, Hashable {
     let id = UUID()
-    let category: QuizCategory
     let text: String
     let choices: [String]
     /// 正解の選択肢のインデックス（0 始まり）。
     let answerIndex: Int
+    /// 固定問題のカテゴリ。AI 生成問題では nil。
+    let category: QuizCategory?
+    /// 進行画面に表示するテーマ名。
+    let topicTitle: String
+    /// 進行画面に表示するアイコン（SF Symbol）。
+    let topicSymbol: String
+}
+
+extension Question {
+    /// 固定問題用の簡易イニシャライザ。表示情報はカテゴリから補完する。
+    init(category: QuizCategory, text: String, choices: [String], answerIndex: Int) {
+        self.init(text: text,
+                  choices: choices,
+                  answerIndex: answerIndex,
+                  category: category,
+                  topicTitle: category.title,
+                  topicSymbol: category.systemImage)
+    }
 }

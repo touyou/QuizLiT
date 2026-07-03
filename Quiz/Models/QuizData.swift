@@ -14,7 +14,10 @@ enum QuizData {
     /// 指定したカテゴリの問題をシャッフルして返す。
     static func questions(for categories: Set<QuizCategory>) -> [Question] {
         allQuestions
-            .filter { categories.contains($0.category) }
+            .filter { question in
+                guard let category = question.category else { return false }
+                return categories.contains(category)
+            }
             .shuffled()
     }
 
