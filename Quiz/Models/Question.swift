@@ -8,7 +8,8 @@
 import SwiftUI
 
 /// 出題カテゴリ。ホーム画面で複数選択できる。
-enum QuizCategory: String, CaseIterable, Identifiable {
+/// App Intents（AppEnum）が Sendable 準拠を要求するため、定義元でまとめて宣言する。
+enum QuizCategory: String, CaseIterable, Identifiable, Sendable {
     case basic
     case iphone
     case algorithm
