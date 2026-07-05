@@ -29,9 +29,25 @@ struct QuizApp: App {
     /// 許可の有無に関わらず広告は表示され、拒否時は IDFA を使わない非パーソナライズ広告になる。
     private func requestTrackingThenStartAds() {
         guard !hasRequestedTracking else { return }
+
+        // まだ選択されていない場合のみダイアログを出す。
+        // 既に選択済み(許可/拒否/制限)なら、そのまま広告 SDK を起動する。
+        guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else {
+            hasRequestedTracking = true
+            MobileAds.shared.start(completionHandler: nil)
+            return
+        }
+
         hasRequestedTracking = true
 
-        ATTrackingManager.requestTrackingAuthorization { _ in
+        // scenePhase == .active は UIKit のアクティブ状態やウィンドウの前面化より
+        // わずかに早く発火することがあり、その瞬間に requestTrackingAuthorization を
+        // 呼ぶとダイアログが無音で抑制される。ウィンドウが確実に前面化してから呼ぶため、
+        // 次のランループ以降まで待ってからリクエストする。
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            let status = await ATTrackingManager.requestTrackingAuthorization()
+            _ = status
             MobileAds.shared.start(completionHandler: nil)
         }
     }
