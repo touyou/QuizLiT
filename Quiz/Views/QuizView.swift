@@ -14,6 +14,35 @@ struct QuizView: View {
     private var isAnswered: Bool { session.selectedChoice != nil }
 
     var body: some View {
+        // 折りたたみ時や横向きなど縦の高さが足りないときだけスクロールに切り替える。
+        // 収まる場合は従来どおり Spacer で回答ボタンを下端に寄せる。
+        ViewThatFits(in: .vertical) {
+            content
+            ScrollView { content }
+        }
+        .safeAreaInset(edge: .top) {
+            HStack {
+                Button {
+                    onQuit()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.headline)
+                        .padding(10)
+                }
+                .buttonStyle(.glass)
+                .foregroundStyle(.primary)
+                Spacer()
+            }
+            .padding(.horizontal, 24)
+            // iPhone Duo などステータスバーが上辺にない端末では上の安全領域が 0 になるため、
+            // 画面端に貼り付かないよう最低限の余白を確保する。
+            .padding(.top, 8)
+        }
+    }
+
+    // MARK: - Subviews
+
+    private var content: some View {
         VStack(spacing: 24) {
             progress
 
@@ -45,24 +74,7 @@ struct QuizView: View {
         }
         .padding(24)
         .readableWidth()
-        .safeAreaInset(edge: .top) {
-            HStack {
-                Button {
-                    onQuit()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.headline)
-                        .padding(10)
-                }
-                .buttonStyle(.glass)
-                .foregroundStyle(.primary)
-                Spacer()
-            }
-            .padding(.horizontal, 24)
-        }
     }
-
-    // MARK: - Subviews
 
     private var progress: some View {
         VStack(spacing: 8) {

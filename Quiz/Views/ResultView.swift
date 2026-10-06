@@ -16,6 +16,14 @@ struct ResultView: View {
     }
 
     var body: some View {
+        // 折りたたみ時や横向きなど縦の高さが足りないときだけスクロールに切り替える。
+        ViewThatFits(in: .vertical) {
+            content
+            ScrollView { content }
+        }
+    }
+
+    private var content: some View {
         VStack(spacing: 28) {
             Spacer()
 
