@@ -14,66 +14,114 @@ struct QuizView: View {
     private var isAnswered: Bool { session.selectedChoice != nil }
 
     var body: some View {
-        // 折りたたみ時や横向きなど縦の高さが足りないときだけスクロールに切り替える。
-        // 収まる場合は従来どおり Spacer で回答ボタンを下端に寄せる。
-        ViewThatFits(in: .vertical) {
+        arrangedContent
+            .safeAreaInset(edge: .top) {
+                HStack {
+                    Button {
+                        onQuit()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.headline)
+                            .padding(10)
+                    }
+                    .buttonStyle(.glass)
+                    .foregroundStyle(.primary)
+                    Spacer()
+                }
+                .padding(.horizontal, 24)
+                // iPhone Duo などステータスバーが上辺にない端末では上の安全領域が 0 になるため、
+                // 画面端に貼り付かないよう最低限の余白を確保する。
+                .padding(.top, 8)
+            }
+    }
+
+    // MARK: - Layout
+
+    /// iOS 27.1 以降は ArrangementView で問題（primary）と選択肢（secondary）を分け、
+    /// 広い画面では左右、縦長の画面では上下に並べる。それ以前は従来の縦積みレイアウト。
+    @ViewBuilder
+    private var arrangedContent: some View {
+        if #available(iOS 27.1, *) {
+            ArrangementView {
+                scrollableIfNeeded { questionPane }
+                    // 上下に並ぶときは問題側を内容の高さに留め、残りを選択肢側に回す。
+                    .splitArrangementFixedLayoutSize(horizontal: false, vertical: true)
+            } secondary: {
+                scrollableIfNeeded { answerPane }
+            }
+            .arrangementViewStyle(.split)
+        } else {
+            scrollableIfNeeded { stackedContent }
+        }
+    }
+
+    /// 折りたたみ時や横向きなど縦の高さが足りないときだけスクロールに切り替える。
+    /// 収まる場合は Spacer で回答ボタンを下端に寄せたまま表示する。
+    private func scrollableIfNeeded(@ViewBuilder _ content: () -> some View) -> some View {
+        let content = content()
+        return ViewThatFits(in: .vertical) {
             content
             ScrollView { content }
         }
-        .safeAreaInset(edge: .top) {
-            HStack {
-                Button {
-                    onQuit()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.headline)
-                        .padding(10)
-                }
-                .buttonStyle(.glass)
-                .foregroundStyle(.primary)
-                Spacer()
-            }
-            .padding(.horizontal, 24)
-            // iPhone Duo などステータスバーが上辺にない端末では上の安全領域が 0 になるため、
-            // 画面端に貼り付かないよう最低限の余白を確保する。
-            .padding(.top, 8)
+    }
+
+    /// iOS 27.1 未満向けの縦積みレイアウト。
+    private var stackedContent: some View {
+        VStack(spacing: 24) {
+            progress
+            questionCard
+            answerControls
         }
+        .padding(24)
+        .readableWidth()
+    }
+
+    private var questionPane: some View {
+        VStack(spacing: 24) {
+            progress
+            questionCard
+            Spacer(minLength: 0)
+        }
+        .padding(24)
+        .readableWidth()
+    }
+
+    private var answerPane: some View {
+        answerControls
+            .padding(24)
+            .readableWidth()
     }
 
     // MARK: - Subviews
 
-    private var content: some View {
-        VStack(spacing: 24) {
-            progress
-
-            questionCard
-
-            VStack(spacing: 12) {
-                ForEach(Array(session.current.choices.enumerated()), id: \.offset) { index, choice in
-                    choiceButton(index: index, text: choice)
-                }
+    /// 選択肢と、回答後に出る「次の問題へ」ボタン。
+    private var answerControls: some View {
+        VStack(spacing: 12) {
+            ForEach(Array(session.current.choices.enumerated()), id: \.offset) { index, choice in
+                choiceButton(index: index, text: choice)
             }
 
-            Spacer(minLength: 0)
+            Spacer(minLength: 12)
 
-            if isAnswered {
-                Button {
-                    withAnimation(.snappy) { session.advance() }
-                } label: {
-                    Label(session.questionNumber == session.total ? "結果を見る" : "次の問題へ",
-                          systemImage: "arrow.right")
-                        .font(.title3.bold())
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                }
-                .buttonStyle(.glassProminent)
-                .tint(.indigo)
-                .foregroundStyle(.white)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+            // 回答の前後で高さが変わるとスクロール有無の判定が切り替わってレイアウトが跳ねるため、
+            // ボタンの領域は常に確保しておき、回答後にフェードインさせる。
+            Button {
+                withAnimation(.snappy) { session.advance() }
+            } label: {
+                Label(session.questionNumber == session.total ? "結果を見る" : "次の問題へ",
+                      systemImage: "arrow.right")
+                    .font(.title3.bold())
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
             }
+            .buttonStyle(.glassProminent)
+            .tint(.indigo)
+            .foregroundStyle(.white)
+            .opacity(isAnswered ? 1 : 0)
+            .offset(y: isAnswered ? 0 : 16)
+            .disabled(!isAnswered)
+            .accessibilityHidden(!isAnswered)
         }
-        .padding(24)
-        .readableWidth()
     }
 
     private var progress: some View {
@@ -118,10 +166,11 @@ struct QuizView: View {
                     .font(.headline)
                     .multilineTextAlignment(.leading)
                 Spacer()
-                if let icon = resultIcon(for: index) {
-                    Image(systemName: icon)
-                        .font(.title3)
-                }
+                // 回答後に行の高さが変わらないよう、アイコン分の領域は常に確保する。
+                Image(systemName: resultIcon(for: index) ?? "circle")
+                    .font(.title3)
+                    .opacity(resultIcon(for: index) == nil ? 0 : 1)
+                    .accessibilityHidden(resultIcon(for: index) == nil)
             }
             .foregroundStyle(foreground(for: index))
             .padding(18)
@@ -165,4 +214,18 @@ struct QuizView: View {
         if index == selected { return "xmark.circle.fill" }
         return nil
     }
+}
+
+#Preview("縦向き") {
+    GameView(session: QuizSession(questions: QuizData.allQuestions), onExit: {})
+}
+
+#Preview("横向き", traits: .landscapeLeft) {
+    GameView(session: QuizSession(questions: QuizData.allQuestions), onExit: {})
+}
+
+#Preview("回答後") {
+    let session = QuizSession(questions: QuizData.allQuestions)
+    session.answer(1)
+    return GameView(session: session, onExit: {})
 }
