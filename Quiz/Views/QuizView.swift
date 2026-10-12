@@ -10,6 +10,9 @@ import SwiftUI
 struct QuizView: View {
     let session: QuizSession
 
+    /// 問題側ペインの内容を、実際の幅で折り返したときの高さ。
+    @State private var questionPaneHeight: CGFloat?
+
     private var isAnswered: Bool { session.selectedChoice != nil }
 
     var body: some View {
@@ -25,6 +28,17 @@ struct QuizView: View {
         if #available(iOS 27.1, *) {
             ArrangementView {
                 scrollableIfNeeded { questionPane }
+                    // 固定サイズの見積もりは折り返し前の幅で行われ、問題文が複数行になると高さが足りなくなる。
+                    // 実際の幅で折り返した高さを測り、それを ideal の高さとして渡す。
+                    .frame(idealHeight: questionPaneHeight)
+                    .background(alignment: .top) {
+                        questionPane
+                            .readableWidth()
+                            .padding(24)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .hidden()
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { questionPaneHeight = $0 }
+                    }
                     // 上下に並ぶときは問題側を内容の高さに留め、残りを選択肢側に回す。
                     .splitArrangementFixedLayoutSize(horizontal: false, vertical: true)
             } secondary: {
