@@ -41,9 +41,9 @@ struct HomeView: View {
 
                     aiSection
                 }
-                .padding(24)
                 .readableWidth()
             }
+            .contentMargins(24, for: .scrollContent)
             .scrollDismissesKeyboard(.interactively)
             .safeAreaInset(edge: .bottom) {
                 AdBannerView(adUnitID: AdUnit.homeBanner) { loaded in

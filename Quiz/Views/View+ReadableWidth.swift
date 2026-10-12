@@ -11,7 +11,8 @@ import SwiftUI
 extension View {
     /// コンテンツを読みやすい最大幅に収めて中央寄せする。
     /// iPhone（幅が maxWidth 未満）ではそのまま全幅で表示される。
-    func readableWidth(_ maxWidth: CGFloat = 640) -> some View {
+    /// 既定値は、外周の余白 24pt × 2 と合わせて 640pt に収まる幅。
+    func readableWidth(_ maxWidth: CGFloat = 592) -> some View {
         frame(maxWidth: maxWidth)
             .frame(maxWidth: .infinity)
     }

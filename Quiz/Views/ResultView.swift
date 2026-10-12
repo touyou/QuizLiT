@@ -17,9 +17,11 @@ struct ResultView: View {
 
     var body: some View {
         // 折りたたみ時や横向きなど縦の高さが足りないときだけスクロールに切り替える。
+        // 外周の余白は、スクロール時だけ contentMargins にしてスクロール領域を端まで広げる。
         ViewThatFits(in: .vertical) {
-            content
+            content.padding(24)
             ScrollView { content }
+                .contentMargins(24, for: .scrollContent)
         }
     }
 
@@ -77,7 +79,6 @@ struct ResultView: View {
                 .foregroundStyle(.secondary)
             }
         }
-        .padding(24)
         .readableWidth()
     }
 

@@ -9,30 +9,11 @@ import SwiftUI
 
 struct QuizView: View {
     let session: QuizSession
-    let onQuit: () -> Void
 
     private var isAnswered: Bool { session.selectedChoice != nil }
 
     var body: some View {
         arrangedContent
-            .safeAreaInset(edge: .top) {
-                HStack {
-                    Button {
-                        onQuit()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.headline)
-                            .padding(10)
-                    }
-                    .buttonStyle(.glass)
-                    .foregroundStyle(.primary)
-                    Spacer()
-                }
-                .padding(.horizontal, 24)
-                // iPhone Duo などステータスバーが上辺にない端末では上の安全領域が 0 になるため、
-                // 画面端に貼り付かないよう最低限の余白を確保する。
-                .padding(.top, 8)
-            }
     }
 
     // MARK: - Layout
@@ -47,7 +28,7 @@ struct QuizView: View {
                     // 上下に並ぶときは問題側を内容の高さに留め、残りを選択肢側に回す。
                     .splitArrangementFixedLayoutSize(horizontal: false, vertical: true)
             } secondary: {
-                scrollableIfNeeded { answerPane }
+                scrollableIfNeeded { answerControls }
             }
             .arrangementViewStyle(.split)
         } else {
@@ -57,11 +38,13 @@ struct QuizView: View {
 
     /// 折りたたみ時や横向きなど縦の高さが足りないときだけスクロールに切り替える。
     /// 収まる場合は Spacer で回答ボタンを下端に寄せたまま表示する。
+    /// 外周の余白もここで付ける。スクロール時は contentMargins にして、スクロール領域自体は端まで広げる。
     private func scrollableIfNeeded(@ViewBuilder _ content: () -> some View) -> some View {
-        let content = content()
+        let content = content().readableWidth()
         return ViewThatFits(in: .vertical) {
-            content
+            content.padding(24)
             ScrollView { content }
+                .contentMargins(24, for: .scrollContent)
         }
     }
 
@@ -72,8 +55,6 @@ struct QuizView: View {
             questionCard
             answerControls
         }
-        .padding(24)
-        .readableWidth()
     }
 
     private var questionPane: some View {
@@ -82,14 +63,6 @@ struct QuizView: View {
             questionCard
             Spacer(minLength: 0)
         }
-        .padding(24)
-        .readableWidth()
-    }
-
-    private var answerPane: some View {
-        answerControls
-            .padding(24)
-            .readableWidth()
     }
 
     // MARK: - Subviews
