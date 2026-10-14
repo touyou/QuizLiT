@@ -109,7 +109,7 @@ struct HomeView: View {
                 .foregroundStyle(.primary)
 
             if QuizGenerator.isAvailable {
-                Text("テーマを入力すると、オンデバイスAIがオリジナル問題を作ります。問題文・選択肢・正誤は自動生成のため誤りを含むことがあり、正しさは保証されません。")
+                Text("テーマを入力すると、AIがオリジナル問題を作ります。問題文・選択肢・正誤は自動生成のため誤りを含むことがあり、正しさは保証されません。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
