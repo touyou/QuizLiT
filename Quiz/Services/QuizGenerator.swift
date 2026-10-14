@@ -61,11 +61,8 @@ final class QuizGenerator {
                     model: PrivateCloudComputeLanguageModel(),
                     instructions: Instructions(Self.instructions))
                 quiz = try await Self.respond(session, to: prompt)
-            } catch is CancellationError {
-                throw CancellationError()
-            } catch {
-                // 日次クォータ切れ・オフライン・混雑のときも出題自体は止めない。
-                guard Self.isOnDeviceAvailable else { throw error }
+            } catch where Self.isOnDeviceAvailable && Self.isPrivateCloudOutage(error) {
+                try Task.checkCancellation()
                 quiz = try await Self.respond(LanguageModelSession(instructions: Self.instructions), to: prompt)
             }
         } else {
@@ -73,6 +70,23 @@ final class QuizGenerator {
         }
 
         return quiz.questions.compactMap { Question(generated: $0, topic: subject) }
+    }
+
+    /// 日次クォータ切れ・オフライン・混雑のときだけオンデバイスに戻す。
+    /// guardrail や拒否などはオンデバイスでも同じく失敗するので、二度待たせずにそのまま返す。
+    @available(iOS 27.0, *)
+    private static func isPrivateCloudOutage(_ error: any Error) -> Bool {
+        switch error {
+        case is PrivateCloudComputeLanguageModel.Error:
+            return true
+        case let error as LanguageModelError:
+            switch error {
+            case .rateLimited, .timeout: return true
+            default: return false
+            }
+        default:
+            return false
+        }
     }
 
     private static func respond(_ session: LanguageModelSession, to prompt: String) async throws -> GeneratedQuiz {
