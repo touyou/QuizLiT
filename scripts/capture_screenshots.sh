@@ -17,6 +17,16 @@
 #   IPHONE_DEST="platform=iOS Simulator,id=<udid>" ./scripts/capture_screenshots.sh iphone
 #
 # iPhone Duo は iOS 27.1 のシミュレータにしかない。
+#
+# iPhone Duo は閉じた状態（外側の画面、縦 1398x2034）と開いた状態（内側の画面、横 2853x2007）を
+# 撮り分ける。開閉はシミュレータのコマンドからは切り替えられず、DeviceHub でデバイスの下にある
+# ボタンを押すしかない。なので撮る前に今の状態を確かめ、合っていなければ止める:
+#
+#   duo-closed  閉じた Duo で撮る（起動し直した直後は閉じている）
+#   duo-open    DeviceHub で開いてから撮る
+#
+# 開いた状態ではテストが内側の画面を撮る（`SCREENSHOT_DUO_OPEN`）。内側のフレームバッファは
+# 縦長のままなので、ここで時計回りに 90° 回して 2853x2007 に揃える。
 
 set -euo pipefail
 
@@ -33,12 +43,15 @@ TEST_ID="QuizUITests/ScreenshotTests"
 IPHONE_DEST="${IPHONE_DEST:-platform=iOS Simulator,name=iPhone 17 Pro Max,OS=27.0}"
 IPAD_DEST="${IPAD_DEST:-platform=iOS Simulator,name=iPad Pro 13-inch (M5),OS=27.0}"
 DUO_DEST="${DUO_DEST:-platform=iOS Simulator,name=iPhone Duo,OS=27.1}"
+DUO_OPEN_SIZE="2853x2007"
+DUO_CLOSED_SIZE="1398x2034"
 
 # platform | destination
 PLATFORMS=(
   "iphone|$IPHONE_DEST"
   "ipad|$IPAD_DEST"
-  "duo|$DUO_DEST"
+  "duo-closed|$DUO_DEST"
+  "duo-open|$DUO_DEST"
 )
 
 requested=("$@")
@@ -88,6 +101,51 @@ override_status_bar() {
     --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
 }
 
+pixel_size() {
+  sips -g pixelWidth -g pixelHeight "$1" | awk '/pixelWidth/ {w=$2} /pixelHeight/ {h=$2} END {print w"x"h}'
+}
+
+# Duo が期待した開閉状態か。既定の画面のサイズで見分ける（閉じていれば外側、開いていれば内側）。
+check_duo_state() {
+  local platform=$1 destination=$2 udid shot size
+  udid=$(udid_for "$destination")
+  if [ -z "$udid" ]; then
+    echo "    FAILED — iPhone Duo のシミュレータが見つからない（$destination）"
+    return 1
+  fi
+  xcrun simctl boot "$udid" 2>/dev/null || true
+  xcrun simctl bootstatus "$udid" -b > /dev/null 2>&1 || true
+  shot="$WORK/duo-state.png"
+  xcrun simctl io "$udid" screenshot "$shot" > /dev/null 2>&1
+  size=$(pixel_size "$shot")
+  case "$platform" in
+    duo-open)
+      [ "$size" = "$DUO_OPEN_SIZE" ] && return 0
+      echo "    FAILED — Duo が閉じている（$size）。DeviceHub でデバイスの下のボタンを押して開いてから撮り直す" ;;
+    duo-closed)
+      [ "$size" = "$DUO_CLOSED_SIZE" ] && return 0
+      echo "    FAILED — Duo が開いている（$size）。DeviceHub で閉じるか、シミュレータを起動し直してから撮り直す" ;;
+  esac
+  return 1
+}
+
+# 開いた Duo の内側の画面は縦長のフレームバッファで返るので、横向きに回して 2853x2007 に揃える。
+# XCUIScreen の画像は 1px 小さい（2006x2852）ので、最後に指定のサイズへ合わせる。
+normalize_duo_open() {
+  local dest=$1 png size w h
+  for png in "$dest"/*.png; do
+    size=$(pixel_size "$png")
+    w=${size%x*}; h=${size#*x}
+    if [ "$w" -lt "$h" ]; then
+      sips -r 90 "$png" > /dev/null
+    fi
+    if [ "$(pixel_size "$png")" != "$DUO_OPEN_SIZE" ]; then
+      sips -z "${DUO_OPEN_SIZE#*x}" "${DUO_OPEN_SIZE%x*}" "$png" > /dev/null
+    fi
+  done
+  echo "    normalized to $DUO_OPEN_SIZE"
+}
+
 capture() {
   local platform=$1 destination=$2 locale=$3
   local bundle="$WORK/$platform-$locale.xcresult"
@@ -98,7 +156,21 @@ capture() {
 
   # 言語は -AppleLanguages の起動引数ではなく -testLanguage / -testRegion で切り替える。
   # こちらはテスト対象アプリの Locale.current まで動く。
-  if ! xcodebuild test \
+  case "$platform" in
+    duo-*)
+      if ! check_duo_state "$platform" "$destination"; then
+        failed+=("$platform/$locale")
+        return
+      fi ;;
+  esac
+
+  # 開いた Duo のときだけ、テストに内側の画面を撮らせる（TEST_RUNNER_ を外した名前でテストに届く）。
+  local duo_open=0
+  if [ "$platform" = "duo-open" ]; then
+    duo_open=1
+  fi
+
+  if ! TEST_RUNNER_SCREENSHOT_DUO_OPEN=$duo_open xcodebuild test \
     -project Quiz.xcodeproj \
     -scheme "$SCHEME" \
     -destination "$destination" \
@@ -147,6 +219,11 @@ PY
   then
     echo "    FAILED — no screenshots extracted from $bundle"
     failed+=("$platform/$locale")
+    return
+  fi
+
+  if [ "$platform" = "duo-open" ]; then
+    normalize_duo_open "$dest"
   fi
 }
 
