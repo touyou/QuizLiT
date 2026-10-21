@@ -13,12 +13,12 @@ enum QuizData {
 
     /// 指定したカテゴリの問題をシャッフルして返す。
     static func questions(for categories: Set<QuizCategory>) -> [Question] {
-        allQuestions
-            .filter { question in
-                guard let category = question.category else { return false }
-                return categories.contains(category)
-            }
-            .shuffled()
+        let questions = allQuestions.filter { question in
+            guard let category = question.category else { return false }
+            return categories.contains(category)
+        }
+        // スクリーンショット撮影中は毎回同じ問題が出るよう、定義順のまま返す。
+        return ScreenshotFixture.isActive ? questions : questions.shuffled()
     }
 
     // MARK: - 知識編（10問）

@@ -104,6 +104,7 @@ struct QuizView: View {
             .buttonStyle(.glassProminent)
             .tint(.indigo)
             .foregroundStyle(.white)
+            .accessibilityIdentifier("nextButton")
             .opacity(isAnswered ? 1 : 0)
             .offset(y: isAnswered ? 0 : 16)
             .disabled(!isAnswered)
@@ -172,6 +173,16 @@ struct QuizView: View {
         }
         .buttonStyle(.plain)
         .disabled(isAnswered)
+        .accessibilityIdentifier(choiceIdentifier(for: index))
+    }
+
+    /// 選択肢の accessibility identifier。
+    /// スクリーンショット撮影中だけ、UI テストが正解を選べるよう正解の選択肢に印を付ける。
+    private func choiceIdentifier(for index: Int) -> String {
+        if ScreenshotFixture.isActive && index == session.current.answerIndex {
+            return "choice-correct"
+        }
+        return "choice-\(index)"
     }
 
     // MARK: - Feedback helpers
