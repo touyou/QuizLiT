@@ -10,8 +10,19 @@
 		1A2B3C4D5E6F000000000012 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 1A2B3C4D5E6F000000000011 /* GoogleMobileAds */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		1A2B3C4D5E6F00000000001A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1A2B3C4D5E6F000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1A2B3C4D5E6F000000000004;
+			remoteInfo = Quiz;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		1A2B3C4D5E6F000000000005 /* Quiz.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Quiz.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1A2B3C4D5E6F000000000013 /* QuizUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QuizUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -27,6 +38,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1A2B3C4D5E6F000000000006 /* Quiz */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (46229B9E2FF7C5B00043E4FD /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Quiz; sourceTree = "<group>"; };
+		1A2B3C4D5E6F000000000014 /* QuizUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = QuizUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -38,6 +50,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		1A2B3C4D5E6F000000000017 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -45,6 +64,7 @@
 			isa = PBXGroup;
 			children = (
 				1A2B3C4D5E6F000000000006 /* Quiz */,
+				1A2B3C4D5E6F000000000014 /* QuizUITests */,
 				1A2B3C4D5E6F000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -53,6 +73,7 @@
 			isa = PBXGroup;
 			children = (
 				1A2B3C4D5E6F000000000005 /* Quiz.app */,
+				1A2B3C4D5E6F000000000013 /* QuizUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,6 +104,29 @@
 			productReference = 1A2B3C4D5E6F000000000005 /* Quiz.app */;
 			productType = "com.apple.product-type.application";
 		};
+		1A2B3C4D5E6F000000000015 /* QuizUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1A2B3C4D5E6F00000000001D /* Build configuration list for PBXNativeTarget "QuizUITests" */;
+			buildPhases = (
+				1A2B3C4D5E6F000000000016 /* Sources */,
+				1A2B3C4D5E6F000000000017 /* Frameworks */,
+				1A2B3C4D5E6F000000000018 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1A2B3C4D5E6F000000000019 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				1A2B3C4D5E6F000000000014 /* QuizUITests */,
+			);
+			name = QuizUITests;
+			packageProductDependencies = (
+			);
+			productName = QuizUITests;
+			productReference = 1A2B3C4D5E6F000000000013 /* QuizUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -96,6 +140,10 @@
 				TargetAttributes = {
 					1A2B3C4D5E6F000000000004 = {
 						CreatedOnToolsVersion = 26.0;
+					};
+					1A2B3C4D5E6F000000000015 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 1A2B3C4D5E6F000000000004;
 					};
 				};
 			};
@@ -117,12 +165,20 @@
 			projectRoot = "";
 			targets = (
 				1A2B3C4D5E6F000000000004 /* Quiz */,
+				1A2B3C4D5E6F000000000015 /* QuizUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		1A2B3C4D5E6F00000000000F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1A2B3C4D5E6F000000000018 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -139,7 +195,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		1A2B3C4D5E6F000000000016 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1A2B3C4D5E6F000000000019 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1A2B3C4D5E6F000000000004 /* Quiz */;
+			targetProxy = 1A2B3C4D5E6F00000000001A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		1A2B3C4D5E6F000000000009 /* Debug */ = {
@@ -315,6 +386,40 @@
 			};
 			name = Release;
 		};
+		1A2B3C4D5E6F00000000001B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B4S4333JDW;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dev.touyou.QuizUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Quiz;
+			};
+			name = Debug;
+		};
+		1A2B3C4D5E6F00000000001C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B4S4333JDW;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dev.touyou.QuizUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Quiz;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -332,6 +437,15 @@
 			buildConfigurations = (
 				1A2B3C4D5E6F00000000000B /* Debug */,
 				1A2B3C4D5E6F00000000000C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1A2B3C4D5E6F00000000001D /* Build configuration list for PBXNativeTarget "QuizUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1A2B3C4D5E6F00000000001B /* Debug */,
+				1A2B3C4D5E6F00000000001C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
