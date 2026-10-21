@@ -61,11 +61,40 @@ region_for() {
 
 mkdir -p "$WORK"
 
+# destination から端末の UDID を引く。id= ならそのまま、name=/OS= なら該当する OS のセクションから探す。
+udid_for() {
+  local destination=$1 name os
+  if [[ "$destination" =~ id=([0-9A-Fa-f-]{36}) ]]; then
+    echo "${BASH_REMATCH[1]}"
+    return
+  fi
+  name=$(sed -nE 's/.*name=([^,]+).*/\1/p' <<< "$destination")
+  os=$(sed -nE 's/.*OS=([^,]+).*/\1/p' <<< "$destination")
+  xcrun simctl list devices available \
+    | awk -v os="-- iOS $os --" -v name="    $name (" '$0 == os {f=1; next} /^-- /{f=0} f && index($0, name) == 1' \
+    | head -1 | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/'
+}
+
+# ステータスバーを 9:41・電波と電池が満タンに固定する。XCTest も時刻を差し替えるが、
+# iPhone Duo の縦のバーには効かず実際の時刻が写るため、simctl で端末ごと上書きする。
+override_status_bar() {
+  local udid
+  udid=$(udid_for "$1")
+  [ -n "$udid" ] || return 0
+  xcrun simctl boot "$udid" 2>/dev/null || true
+  xcrun simctl bootstatus "$udid" -b > /dev/null
+  xcrun simctl status_bar "$udid" override \
+    --time "9:41" --dataNetwork wifi --wifiMode active --wifiBars 3 \
+    --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
+}
+
 capture() {
   local platform=$1 destination=$2 locale=$3
   local bundle="$WORK/$platform-$locale.xcresult"
   local log="$WORK/$platform-$locale.log"
   rm -rf "$bundle"
+
+  override_status_bar "$destination"
 
   # 言語は -AppleLanguages の起動引数ではなく -testLanguage / -testRegion で切り替える。
   # こちらはテスト対象アプリの Locale.current まで動く。
