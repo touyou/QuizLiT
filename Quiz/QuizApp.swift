@@ -29,6 +29,8 @@ struct QuizApp: App {
     /// 許可の有無に関わらず広告は表示され、拒否時は IDFA を使わない非パーソナライズ広告になる。
     private func requestTrackingThenStartAds() {
         guard !hasRequestedTracking else { return }
+        // スクリーンショット撮影中は許可ダイアログも広告も出さない。
+        guard !ScreenshotFixture.isActive else { return }
 
         // まだ選択されていない場合のみダイアログを出す。
         // 既に選択済み(許可/拒否/制限)なら、そのまま広告 SDK を起動する。

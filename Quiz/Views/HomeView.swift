@@ -46,13 +46,16 @@ struct HomeView: View {
             .contentMargins(24, for: .scrollContent)
             .scrollDismissesKeyboard(.interactively)
             .safeAreaInset(edge: .bottom) {
-                AdBannerView(adUnitID: AdUnit.homeBanner) { loaded in
-                    withAnimation(.easeInOut) { adLoaded = loaded }
+                // スクリーンショット撮影中は広告を読み込まない。
+                if !ScreenshotFixture.isActive {
+                    AdBannerView(adUnitID: AdUnit.homeBanner) { loaded in
+                        withAnimation(.easeInOut) { adLoaded = loaded }
+                    }
+                    .frame(height: adLoaded ? 50 : 0)
+                    .frame(maxWidth: .infinity)
+                    .opacity(adLoaded ? 1 : 0)
+                    .clipped()
                 }
-                .frame(height: adLoaded ? 50 : 0)
-                .frame(maxWidth: .infinity)
-                .opacity(adLoaded ? 1 : 0)
-                .clipped()
             }
         }
         .overlay {
@@ -97,6 +100,7 @@ struct HomeView: View {
         .buttonStyle(.glassProminent)
         .tint(.indigo)
         .foregroundStyle(.white)
+        .accessibilityIdentifier("startButton")
         .disabled(selection.isEmpty)
         .opacity(selection.isEmpty ? 0.5 : 1)
         .animation(.easeInOut, value: selection.isEmpty)
@@ -108,7 +112,9 @@ struct HomeView: View {
                 .font(.headline)
                 .foregroundStyle(.primary)
 
-            if QuizGenerator.isAvailable {
+            // スクリーンショット撮影中は、撮影する Mac で Apple Intelligence が使えるかに左右されないよう、
+            // 利用できる端末での表示に揃える。
+            if QuizGenerator.isAvailable || ScreenshotFixture.isActive {
                 Text("テーマを入力すると、AIがオリジナル問題を作ります。入力したテーマは Apple の Private Cloud Compute で処理されることがあります。問題文・選択肢・正誤は自動生成のため誤りを含むことがあり、正しさは保証されません。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -255,6 +261,7 @@ private struct CategoryCard: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("category-\(category.rawValue)")
     }
 }
 
