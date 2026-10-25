@@ -48,7 +48,11 @@ struct QuizApp: App {
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 500_000_000)
             let status = await ATTrackingManager.requestTrackingAuthorization()
-            _ = status
+            // ダイアログが出ずに閉じると未選択のまま返る。広告は起動せず、次に前面へ来たとき聞き直す。
+            guard status != .notDetermined else {
+                hasRequestedTracking = false
+                return
+            }
             AdsStartup.shared.start()
         }
     }
