@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import GoogleMobileAds
 import AppTrackingTransparency
 
 @main
@@ -36,7 +35,7 @@ struct QuizApp: App {
         // 既に選択済み(許可/拒否/制限)なら、そのまま広告 SDK を起動する。
         guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else {
             hasRequestedTracking = true
-            MobileAds.shared.start(completionHandler: nil)
+            AdsStartup.shared.start()
             return
         }
 
@@ -50,7 +49,7 @@ struct QuizApp: App {
             try? await Task.sleep(nanoseconds: 500_000_000)
             let status = await ATTrackingManager.requestTrackingAuthorization()
             _ = status
-            MobileAds.shared.start(completionHandler: nil)
+            AdsStartup.shared.start()
         }
     }
 }

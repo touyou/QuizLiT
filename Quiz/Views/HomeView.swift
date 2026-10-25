@@ -17,6 +17,7 @@ struct HomeView: View {
     @FocusState private var themeFocused: Bool
 
     private let launcher = QuizLauncher.shared
+    private let ads = AdsStartup.shared
 
     var body: some View {
         ZStack {
@@ -46,8 +47,8 @@ struct HomeView: View {
             .contentMargins(24, for: .scrollContent)
             .scrollDismissesKeyboard(.interactively)
             .safeAreaInset(edge: .bottom) {
-                // スクリーンショット撮影中は広告を読み込まない。
-                if !ScreenshotFixture.isActive {
+                // ATT の回答が出て SDK を起動するまでバナーを置かない（撮影中は起動しない）。
+                if ads.isStarted {
                     AdBannerView(adUnitID: AdUnit.homeBanner) { loaded in
                         withAnimation(.easeInOut) { adLoaded = loaded }
                     }
