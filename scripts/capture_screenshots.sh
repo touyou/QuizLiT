@@ -96,10 +96,11 @@ override_status_bar() {
   udid=$(udid_for "$1")
   [ -n "$udid" ] || return 0
   xcrun simctl boot "$udid" 2>/dev/null || true
-  xcrun simctl bootstatus "$udid" -b > /dev/null
+  # 時刻を固定できなくても撮影は続ける（その端末のステータスバーが実時刻になるだけ）
+  xcrun simctl bootstatus "$udid" -b > /dev/null 2>&1 || true
   xcrun simctl status_bar "$udid" override \
     --time "9:41" --dataNetwork wifi --wifiMode active --wifiBars 3 \
-    --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
+    --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100 || true
 }
 
 pixel_size() {
