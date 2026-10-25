@@ -6,6 +6,7 @@
 //
 
 import GoogleMobileAds
+import Observation
 
 /// 広告 SDK の起動状態。バナーは `isStarted` になってから置く。
 /// 起動前に `BannerView.load` を呼ぶと SDK が暗黙に起動し、ATT の回答前に広告リクエストが飛ぶ。

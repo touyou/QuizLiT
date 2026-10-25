@@ -17,7 +17,7 @@ struct QuizApp: App {
         WindowGroup {
             HomeView()
         }
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase, initial: true) { _, phase in
             // ATT の許可ダイアログはアプリが前面(active)のときのみ表示できる。
             guard phase == .active else { return }
             requestTrackingThenStartAds()
