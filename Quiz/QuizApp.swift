@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import GoogleMobileAds
 import AppTrackingTransparency
 
 @main
@@ -18,7 +17,7 @@ struct QuizApp: App {
         WindowGroup {
             HomeView()
         }
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase, initial: true) { _, phase in
             // ATT の許可ダイアログはアプリが前面(active)のときのみ表示できる。
             guard phase == .active else { return }
             requestTrackingThenStartAds()
@@ -29,12 +28,14 @@ struct QuizApp: App {
     /// 許可の有無に関わらず広告は表示され、拒否時は IDFA を使わない非パーソナライズ広告になる。
     private func requestTrackingThenStartAds() {
         guard !hasRequestedTracking else { return }
+        // スクリーンショット撮影中は許可ダイアログも広告も出さない。
+        guard !ScreenshotFixture.isActive else { return }
 
         // まだ選択されていない場合のみダイアログを出す。
         // 既に選択済み(許可/拒否/制限)なら、そのまま広告 SDK を起動する。
         guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else {
             hasRequestedTracking = true
-            MobileAds.shared.start(completionHandler: nil)
+            AdsStartup.shared.start()
             return
         }
 
@@ -47,8 +48,12 @@ struct QuizApp: App {
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 500_000_000)
             let status = await ATTrackingManager.requestTrackingAuthorization()
-            _ = status
-            MobileAds.shared.start(completionHandler: nil)
+            // ダイアログが出ずに閉じると未選択のまま返る。広告は起動せず、次に前面へ来たとき聞き直す。
+            guard status != .notDetermined else {
+                hasRequestedTracking = false
+                return
+            }
+            AdsStartup.shared.start()
         }
     }
 }

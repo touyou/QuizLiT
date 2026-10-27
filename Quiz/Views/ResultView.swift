@@ -37,6 +37,7 @@ struct ResultView: View {
             Text("結果発表")
                 .font(.title.bold())
                 .foregroundStyle(.primary)
+                .accessibilityIdentifier("resultTitle")
 
             VStack(spacing: 8) {
                 Text("\(session.correctCount) / \(session.total) 問正解")
