@@ -2,7 +2,7 @@
 //  QuizData.swift
 //  Quiz
 //
-//  全問題を保持する静的データ。旧 UIKit 版の設問をそのまま移植している。
+//  固定問題の静的データ。毎回この中から一部を選んで出題する。
 //
 
 import Foundation
@@ -11,17 +11,30 @@ enum QuizData {
     /// 全カテゴリの全問題。
     static let allQuestions: [Question] = basic + iphone + algorithm
 
-    /// 指定したカテゴリの問題をシャッフルして返す。
+    /// 1 回のプレイで出題する問題数。
+    static let questionsPerSession = 10
+
+    /// 指定したカテゴリから、1 回分の問題をランダムに選んで返す。選択肢の並びも毎回入れ替える。
+    /// 複数カテゴリを選んだときに偏らないよう、カテゴリを順番に回して 1 問ずつ取る。
     static func questions(for categories: Set<QuizCategory>) -> [Question] {
-        let questions = allQuestions.filter { question in
-            guard let category = question.category else { return false }
-            return categories.contains(category)
+        // スクリーンショット撮影中は毎回同じ画面になるよう、定義順・定義どおりの選択肢で返す。
+        let fixed = ScreenshotFixture.isActive
+        var pools = QuizCategory.allCases
+            .filter(categories.contains)
+            .map { category in
+                let pool = allQuestions.filter { $0.category == category }
+                return fixed ? pool : pool.shuffled()
+            }
+        var picked: [Question] = []
+        while picked.count < questionsPerSession, pools.contains(where: { !$0.isEmpty }) {
+            for i in pools.indices where !pools[i].isEmpty && picked.count < questionsPerSession {
+                picked.append(pools[i].removeFirst())
+            }
         }
-        // スクリーンショット撮影中は毎回同じ問題が出るよう、定義順のまま返す。
-        return ScreenshotFixture.isActive ? questions : questions.shuffled()
+        return fixed ? picked : picked.shuffled().map { $0.withShuffledChoices() }
     }
 
-    // MARK: - 知識編（10問）
+    // MARK: - 知識編
 
     private static let basic: [Question] = [
         Question(category: .basic,
@@ -64,9 +77,85 @@ enum QuizData {
                  text: "Go言語はどこの会社の言語？",
                  choices: ["Microsoft", "Google", "Adobe"],
                  answerIndex: 1),
+        Question(category: .basic,
+                 text: "JavaScriptの言語仕様を標準化したものの名前は？",
+                 choices: ["ECMAScript", "JScript", "TypeScript"],
+                 answerIndex: 0),
+        Question(category: .basic,
+                 text: "Linuxカーネルを最初に開発した人物は？",
+                 choices: ["リチャード・ストールマン", "リーナス・トーバルズ", "デニス・リッチー"],
+                 answerIndex: 1),
+        Question(category: .basic,
+                 text: "C言語を開発した人物として知られるのは？",
+                 choices: ["ジェームズ・ゴスリン", "ラリー・ウォール", "デニス・リッチー"],
+                 answerIndex: 2),
+        Question(category: .basic,
+                 text: "C++を開発した人物は？",
+                 choices: ["ビャーネ・ストロヴストルップ", "グイド・ヴァンロッサム", "ラスムス・ラードフ"],
+                 answerIndex: 0),
+        Question(category: .basic,
+                 text: "Javaの生みの親として知られる人物は？",
+                 choices: ["アンダース・ヘルスバーグ", "ジェームズ・ゴスリン", "ブレンダン・アイク"],
+                 answerIndex: 1),
+        Question(category: .basic,
+                 text: "JavaScriptを約10日間で設計したといわれる人物は？",
+                 choices: ["ダグラス・クロックフォード", "ライアン・ダール", "ブレンダン・アイク"],
+                 answerIndex: 2),
+        Question(category: .basic,
+                 text: "バージョン管理システムGitを開発した人物は？",
+                 choices: ["リーナス・トーバルズ", "ビル・ゲイツ", "ティム・バーナーズ＝リー"],
+                 answerIndex: 0),
+        Question(category: .basic,
+                 text: "Microsoftが開発した、JavaScriptに静的な型を加えた言語は？",
+                 choices: ["CoffeeScript", "TypeScript", "Dart"],
+                 answerIndex: 1),
+        Question(category: .basic,
+                 text: "JetBrainsが開発し、Androidアプリ開発でGoogleが推奨する言語となったのは？",
+                 choices: ["Scala", "Groovy", "Kotlin"],
+                 answerIndex: 2),
+        Question(category: .basic,
+                 text: "Go言語のマスコットキャラクターの名前は？",
+                 choices: ["Gopher", "Tux", "Duke"],
+                 answerIndex: 0),
+        Question(category: .basic,
+                 text: "Linuxのマスコットとして知られるペンギンの名前は？",
+                 choices: ["Pingu", "Tux", "Ferris"],
+                 answerIndex: 1),
+        Question(category: .basic,
+                 text: "Rustのマスコットとして親しまれているカニの名前は？",
+                 choices: ["Gopher", "Octocat", "Ferris"],
+                 answerIndex: 2),
+        Question(category: .basic,
+                 text: "Rubyという名前は、宝石の「真珠」にちなんだ名前を持つ別の言語を意識して付けられた。その言語は？",
+                 choices: ["Perl", "Python", "Pascal"],
+                 answerIndex: 0),
+        Question(category: .basic,
+                 text: "世界初のプログラマーとも呼ばれ、バベッジの解析機関のためのプログラムを書いたとされる人物は？",
+                 choices: ["グレース・ホッパー", "エイダ・ラブレス", "アラン・チューリング"],
+                 answerIndex: 1),
+        Question(category: .basic,
+                 text: "カーニハンとリッチーが書いた『プログラミング言語C』の通称は？",
+                 choices: ["SICP", "TAOCP", "K&R"],
+                 answerIndex: 2),
+        Question(category: .basic,
+                 text: "ドナルド・クヌースが書き続けている大著『The Art of Computer Programming』の略称は？",
+                 choices: ["TAOCP", "SICP", "CLRS"],
+                 answerIndex: 0),
+        Question(category: .basic,
+                 text: "Webページの色や配置などの見た目を指定するための言語は？",
+                 choices: ["HTML", "CSS", "SQL"],
+                 answerIndex: 1),
+        Question(category: .basic,
+                 text: "データベースに問い合わせるときに使う言語として広く使われているのは？",
+                 choices: ["YAML", "Markdown", "SQL"],
+                 answerIndex: 2),
+        Question(category: .basic,
+                 text: "Pythonでインデント（字下げ）が持つ意味は？",
+                 choices: ["ブロックの範囲を表す", "コメントを表す", "変数の型を表す"],
+                 answerIndex: 0),
     ]
 
-    // MARK: - iPhoneアプリ開発編（10問）
+    // MARK: - iPhoneアプリ開発編
 
     private static let iphone: [Question] = [
         Question(category: .iphone,
@@ -109,9 +198,81 @@ enum QuizData {
                  text: "iPhoneアプリ開発においてコードを書く時、ボタンをおした時の処理などを記述する関数に必ずつけるものといえば？",
                  choices: ["@IBAction", "@IBInspectable", "@IBDesignable"],
                  answerIndex: 0),
+        Question(category: .iphone,
+                 text: "AppleがWWDC2019で発表した、UIを宣言的に書けるフレームワークは？",
+                 choices: ["SwiftUI", "UIKit", "AppKit"],
+                 answerIndex: 0),
+        Question(category: .iphone,
+                 text: "SwiftUIで、ビュー自身が持つ値を変えたときに画面へ反映させるためのプロパティラッパーは？",
+                 choices: ["@IBOutlet", "@State", "@objc"],
+                 answerIndex: 1),
+        Question(category: .iphone,
+                 text: "SwiftUIで、要素を縦に並べるときに使うビューは？",
+                 choices: ["HStack", "ZStack", "VStack"],
+                 answerIndex: 2),
+        Question(category: .iphone,
+                 text: "SwiftUIで、要素を重ねて表示するときに使うビューは？",
+                 choices: ["ZStack", "VStack", "HStack"],
+                 answerIndex: 0),
+        Question(category: .iphone,
+                 text: "SwiftUIのビューで、bodyプロパティの型としてよく書かれるものは？",
+                 choices: ["any Object", "some View", "View?"],
+                 answerIndex: 1),
+        Question(category: .iphone,
+                 text: "Swiftで、値が無いかもしれないことを表す仕組みは？",
+                 choices: ["Nullable", "Maybe", "Optional"],
+                 answerIndex: 2),
+        Question(category: .iphone,
+                 text: "Swiftで、Optionalの値を安全に取り出して使う構文は？",
+                 choices: ["if let", "try!", "as!"],
+                 answerIndex: 0),
+        Question(category: .iphone,
+                 text: "Swiftで、再代入できない定数を宣言するキーワードは？",
+                 choices: ["var", "let", "const"],
+                 answerIndex: 1),
+        Question(category: .iphone,
+                 text: "Swiftで、async関数を呼び出して結果を待つときに付けるキーワードは？",
+                 choices: ["yield", "defer", "await"],
+                 answerIndex: 2),
+        Question(category: .iphone,
+                 text: "Swiftのstructとclassの違いとして正しいのは？",
+                 choices: ["structは値型、classは参照型", "structは参照型、classは値型", "どちらも参照型"],
+                 answerIndex: 0),
+        Question(category: .iphone,
+                 text: "Swiftがオープンソースとして公開されたのは何年？",
+                 choices: ["2017年", "2015年", "2019年"],
+                 answerIndex: 1),
+        Question(category: .iphone,
+                 text: "WWDC2023で発表された、Swiftのコードでデータモデルを書いて保存できるフレームワークは？",
+                 choices: ["Core Data", "CloudKit", "SwiftData"],
+                 answerIndex: 2),
+        Question(category: .iphone,
+                 text: "リリース前のアプリをテスターに配布できるAppleのサービスは？",
+                 choices: ["TestFlight", "App Clips", "Game Center"],
+                 answerIndex: 0),
+        Question(category: .iphone,
+                 text: "アプリの処理時間やメモリ使用量を計測するための、Xcodeに付属するツールは？",
+                 choices: ["Simulator", "Instruments", "Reality Composer"],
+                 answerIndex: 1),
+        Question(category: .iphone,
+                 text: "Swiftのコードをその場で動かして結果を確かめられる、Xcodeの機能は？",
+                 choices: ["Organizer", "Interface Builder", "Playground"],
+                 answerIndex: 2),
+        Question(category: .iphone,
+                 text: "Siriやショートカットからアプリの機能を呼び出せるようにするフレームワークは？",
+                 choices: ["App Intents", "StoreKit", "MapKit"],
+                 answerIndex: 0),
+        Question(category: .iphone,
+                 text: "ホーム画面のウィジェットを作るためのフレームワークは？",
+                 choices: ["HomeKit", "WidgetKit", "GameKit"],
+                 answerIndex: 1),
+        Question(category: .iphone,
+                 text: "アプリ内課金を実装するためのフレームワークは？",
+                 choices: ["PassKit", "ARKit", "StoreKit"],
+                 answerIndex: 2),
     ]
 
-    // MARK: - アルゴリズム編（7問）
+    // MARK: - アルゴリズム編
 
     private static let algorithm: [Question] = [
         Question(category: .algorithm,
@@ -142,5 +303,77 @@ enum QuizData {
                  text: "囲碁などのAIにつかわれる乱数を利用したアルゴリズムといえば？",
                  choices: ["モンテカルロ法", "カルテモンロ法", "メルセンヌ法"],
                  answerIndex: 0),
+        Question(category: .algorithm,
+                 text: "ソート済みの配列から値を探すとき、探す範囲を半分ずつ狭めていく方法は？",
+                 choices: ["二分探索", "線形探索", "深さ優先探索"],
+                 answerIndex: 0),
+        Question(category: .algorithm,
+                 text: "要素数 n の配列に対する二分探索の計算量は？",
+                 choices: ["O(n)", "O(log n)", "O(n²)"],
+                 answerIndex: 1),
+        Question(category: .algorithm,
+                 text: "クイックソートの平均的な計算量は？",
+                 choices: ["O(n)", "O(n²)", "O(n log n)"],
+                 answerIndex: 2),
+        Question(category: .algorithm,
+                 text: "ハッシュテーブルで値を探すときの平均的な計算量は？",
+                 choices: ["O(1)", "O(log n)", "O(n)"],
+                 answerIndex: 0),
+        Question(category: .algorithm,
+                 text: "計算量が O(n²) のアルゴリズムで、入力の大きさ n が10倍になると処理時間はおよそ何倍になる？",
+                 choices: ["10倍", "100倍", "20倍"],
+                 answerIndex: 1),
+        Question(category: .algorithm,
+                 text: "最初に入れたものが最初に取り出されるデータ構造は？",
+                 choices: ["スタック", "ヒープ", "キュー"],
+                 answerIndex: 2),
+        Question(category: .algorithm,
+                 text: "最後に入れたものが最初に取り出されるデータ構造は？",
+                 choices: ["スタック", "キュー", "連結リスト"],
+                 answerIndex: 0),
+        Question(category: .algorithm,
+                 text: "幅優先探索で、次に訪れる頂点を管理するのにふつう使うデータ構造は？",
+                 choices: ["スタック", "キュー", "セグメント木"],
+                 answerIndex: 1),
+        Question(category: .algorithm,
+                 text: "グラフの最小全域木を求めるアルゴリズムは？",
+                 choices: ["ダイクストラ法", "ワーシャルフロイド法", "クラスカル法"],
+                 answerIndex: 2),
+        Question(category: .algorithm,
+                 text: "すべての頂点の組について最短経路を求める、3重ループで書けるアルゴリズムは？",
+                 choices: ["ワーシャルフロイド法", "ベルマンフォード法", "プリム法"],
+                 answerIndex: 0),
+        Question(category: .algorithm,
+                 text: "負の重みの辺があっても単一始点の最短経路を求められ、負の閉路も検出できるアルゴリズムは？",
+                 choices: ["ダイクストラ法", "ベルマンフォード法", "クラスカル法"],
+                 answerIndex: 1),
+        Question(category: .algorithm,
+                 text: "グループの併合と「同じグループか」の判定を高速に行えるデータ構造は？",
+                 choices: ["トライ木", "スタック", "Union-Find"],
+                 answerIndex: 2),
+        Question(category: .algorithm,
+                 text: "配列の区間の和や最小値を、値を更新しながら O(log n) で求められるデータ構造は？",
+                 choices: ["セグメント木", "Union-Find", "キュー"],
+                 answerIndex: 0),
+        Question(category: .algorithm,
+                 text: "隣り合う要素を比べて入れ替えることを繰り返す、シンプルなソートは？",
+                 choices: ["マージソート", "バブルソート", "ヒープソート"],
+                 answerIndex: 1),
+        Question(category: .algorithm,
+                 text: "配列を半分に分けてそれぞれをソートし、最後に合わせていくソートは？",
+                 choices: ["挿入ソート", "選択ソート", "マージソート"],
+                 answerIndex: 2),
+        Question(category: .algorithm,
+                 text: "ユークリッドの互除法で求められるものは？",
+                 choices: ["最大公約数", "素因数分解", "平方根"],
+                 answerIndex: 0),
+        Question(category: .algorithm,
+                 text: "ある数以下の素数を、小さい素数の倍数を順に消していくことで列挙する方法は？",
+                 choices: ["ユークリッドの互除法", "エラトステネスの篩", "ニュートン法"],
+                 answerIndex: 1),
+        Question(category: .algorithm,
+                 text: "その時点でいちばん良さそうな選択を繰り返して答えを作る解き方は？",
+                 choices: ["全探索", "二分探索", "貪欲法"],
+                 answerIndex: 2),
     ]
 }

@@ -69,4 +69,15 @@ extension Question {
                   topicTitle: category.title,
                   topicSymbol: category.systemImage)
     }
+
+    /// 選択肢の並びを入れ替えた同じ問題を返す。正解の位置が偏らないよう出題時に使う。
+    func withShuffledChoices() -> Question {
+        let order = choices.indices.shuffled()
+        return Question(text: text,
+                        choices: order.map { choices[$0] },
+                        answerIndex: order.firstIndex(of: answerIndex) ?? answerIndex,
+                        category: category,
+                        topicTitle: topicTitle,
+                        topicSymbol: topicSymbol)
+    }
 }

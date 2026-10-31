@@ -9,7 +9,7 @@
 - **SwiftUI へ再実装**（`Quiz/` 配下）
   - `QuizApp.swift` … `@main App`。起動時に `MobileAds.shared.start()`
   - `Models/Question.swift` … `QuizCategory` / `Question`
-  - `Models/QuizData.swift` … 全27問（旧版の設問をそのまま移植）
+  - `Models/QuizData.swift` … 固定問題（旧版の 27 問 + 追加分）
   - `Models/QuizSession.swift` … `@Observable` の進行状態
   - `Views/BackgroundView.swift` … `MeshGradient` 背景
   - `Views/HomeView.swift` … カテゴリ選択（Liquid Glass カード）
