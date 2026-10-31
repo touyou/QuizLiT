@@ -15,18 +15,23 @@ enum QuizData {
     static let questionsPerSession = 10
 
     /// 指定したカテゴリから、1 回分の問題をランダムに選んで返す。選択肢の並びも毎回入れ替える。
+    /// 複数カテゴリを選んだときに偏らないよう、カテゴリを順番に回して 1 問ずつ取る。
     static func questions(for categories: Set<QuizCategory>) -> [Question] {
-        let questions = allQuestions.filter { question in
-            guard let category = question.category else { return false }
-            return categories.contains(category)
-        }
         // スクリーンショット撮影中は毎回同じ画面になるよう、定義順・定義どおりの選択肢で返す。
-        if ScreenshotFixture.isActive {
-            return Array(questions.prefix(questionsPerSession))
+        let fixed = ScreenshotFixture.isActive
+        var pools = QuizCategory.allCases
+            .filter(categories.contains)
+            .map { category in
+                let pool = allQuestions.filter { $0.category == category }
+                return fixed ? pool : pool.shuffled()
+            }
+        var picked: [Question] = []
+        while picked.count < questionsPerSession, pools.contains(where: { !$0.isEmpty }) {
+            for i in pools.indices where !pools[i].isEmpty && picked.count < questionsPerSession {
+                picked.append(pools[i].removeFirst())
+            }
         }
-        return questions.shuffled()
-            .prefix(questionsPerSession)
-            .map { $0.withShuffledChoices() }
+        return fixed ? picked : picked.shuffled().map { $0.withShuffledChoices() }
     }
 
     // MARK: - 知識編
