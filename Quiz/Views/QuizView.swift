@@ -13,26 +13,17 @@ struct QuizView: View {
     /// 問題側ペインの内容を、実際の幅で折り返したときの高さ。
     @State private var questionPaneHeight: CGFloat?
 
-    private var isAnswered: Bool { session.selectedChoice != nil }
-
-    var body: some View {
-        arrangedContent
-    }
-
-    // MARK: - Layout
-
     /// iOS 27.1 以降は ArrangementView で問題（primary）と選択肢（secondary）を分け、
     /// 広い画面では左右、縦長の画面では上下に並べる。それ以前は従来の縦積みレイアウト。
-    @ViewBuilder
-    private var arrangedContent: some View {
+    var body: some View {
         if #available(iOS 27.1, *) {
             ArrangementView {
-                scrollableIfNeeded { questionPane }
+                ScrollableIfNeeded { QuestionPane(session: session) }
                     // 固定サイズの見積もりは折り返し前の幅で行われ、問題文が複数行になると高さが足りなくなる。
                     // 実際の幅で折り返した高さを測り、それを ideal の高さとして渡す。
                     .frame(idealHeight: questionPaneHeight)
                     .background(alignment: .top) {
-                        questionPane
+                        QuestionPane(session: session)
                             .readableWidth()
                             .padding(24)
                             .fixedSize(horizontal: false, vertical: true)
@@ -42,50 +33,59 @@ struct QuizView: View {
                     // 上下に並ぶときは問題側を内容の高さに留め、残りを選択肢側に回す。
                     .splitArrangementFixedLayoutSize(horizontal: false, vertical: true)
             } secondary: {
-                scrollableIfNeeded { answerControls }
+                ScrollableIfNeeded { AnswerControls(session: session) }
             }
             .arrangementViewStyle(.split)
         } else {
-            scrollableIfNeeded { stackedContent }
+            // iOS 27.1 未満向けの縦積みレイアウト。
+            ScrollableIfNeeded {
+                VStack(spacing: 24) {
+                    QuizProgressHeader(session: session)
+                    QuestionCard(text: session.current.text)
+                    AnswerControls(session: session)
+                }
+            }
         }
     }
+}
 
-    /// 折りたたみ時や横向きなど縦の高さが足りないときだけスクロールに切り替える。
-    /// 収まる場合は Spacer で回答ボタンを下端に寄せたまま表示する。
-    /// 外周の余白もここで付ける。スクロール時は contentMargins にして、スクロール領域自体は端まで広げる。
-    private func scrollableIfNeeded(@ViewBuilder _ content: () -> some View) -> some View {
-        let content = content().readableWidth()
-        return ViewThatFits(in: .vertical) {
-            content.padding(24)
-            ScrollView { content }
+/// 折りたたみ時や横向きなど縦の高さが足りないときだけスクロールに切り替える。
+/// 収まる場合は Spacer で回答ボタンを下端に寄せたまま表示する。
+/// 外周の余白もここで付ける。スクロール時は contentMargins にして、スクロール領域自体は端まで広げる。
+private struct ScrollableIfNeeded<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        ViewThatFits(in: .vertical) {
+            content.readableWidth().padding(24)
+            ScrollView { content.readableWidth() }
                 .contentMargins(24, for: .scrollContent)
         }
     }
+}
 
-    /// iOS 27.1 未満向けの縦積みレイアウト。
-    private var stackedContent: some View {
-        VStack(spacing: 24) {
-            progress
-            questionCard
-            answerControls
-        }
-    }
+private struct QuestionPane: View {
+    let session: QuizSession
 
-    private var questionPane: some View {
+    var body: some View {
         VStack(spacing: 24) {
-            progress
-            questionCard
+            QuizProgressHeader(session: session)
+            QuestionCard(text: session.current.text)
             Spacer(minLength: 0)
         }
     }
+}
 
-    // MARK: - Subviews
+/// 選択肢と、回答後に出る「次の問題へ」ボタン。
+private struct AnswerControls: View {
+    let session: QuizSession
 
-    /// 選択肢と、回答後に出る「次の問題へ」ボタン。
-    private var answerControls: some View {
+    private var isAnswered: Bool { session.selectedChoice != nil }
+
+    var body: some View {
         VStack(spacing: 12) {
             ForEach(Array(session.current.choices.enumerated()), id: \.offset) { index, choice in
-                choiceButton(index: index, text: choice)
+                ChoiceButton(session: session, index: index, text: choice)
             }
 
             Spacer(minLength: 12)
@@ -111,8 +111,12 @@ struct QuizView: View {
             .accessibilityHidden(!isAnswered)
         }
     }
+}
 
-    private var progress: some View {
+private struct QuizProgressHeader: View {
+    let session: QuizSession
+
+    var body: some View {
         VStack(spacing: 8) {
             HStack {
                 Label(session.current.topicTitle, systemImage: session.current.topicSymbol)
@@ -134,9 +138,13 @@ struct QuizView: View {
             }
         }
     }
+}
 
-    private var questionCard: some View {
-        Text(session.current.text)
+private struct QuestionCard: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
             .font(.title3.weight(.semibold))
             .foregroundStyle(.primary)
             .multilineTextAlignment(.leading)
@@ -144,8 +152,16 @@ struct QuizView: View {
             .padding(24)
             .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 24))
     }
+}
 
-    private func choiceButton(index: Int, text: String) -> some View {
+private struct ChoiceButton: View {
+    let session: QuizSession
+    let index: Int
+    let text: String
+
+    private var isAnswered: Bool { session.selectedChoice != nil }
+
+    var body: some View {
         Button {
             withAnimation(.snappy) { session.answer(index) }
         } label: {
@@ -155,17 +171,17 @@ struct QuizView: View {
                     .multilineTextAlignment(.leading)
                 Spacer()
                 // 回答後に行の高さが変わらないよう、アイコン分の領域は常に確保する。
-                Image(systemName: resultIcon(for: index) ?? "circle")
+                Image(systemName: resultIcon ?? "circle")
                     .font(.title3)
-                    .opacity(resultIcon(for: index) == nil ? 0 : 1)
-                    .accessibilityHidden(resultIcon(for: index) == nil)
+                    .opacity(resultIcon == nil ? 0 : 1)
+                    .accessibilityHidden(resultIcon == nil)
             }
-            .foregroundStyle(foreground(for: index))
+            .foregroundStyle(tint ?? .primary)
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(background(for: index), in: .rect(cornerRadius: 18))
+            .background(tint?.opacity(0.18) ?? Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
             .overlay {
-                if let tint = tint(for: index) {
+                if let tint {
                     RoundedRectangle(cornerRadius: 18)
                         .stroke(tint, lineWidth: 2)
                 }
@@ -173,40 +189,27 @@ struct QuizView: View {
         }
         .buttonStyle(.plain)
         .disabled(isAnswered)
-        .accessibilityIdentifier(choiceIdentifier(for: index))
+        .accessibilityIdentifier(identifier)
     }
 
     /// 選択肢の accessibility identifier。
     /// スクリーンショット撮影中だけ、UI テストが正解を選べるよう正解の選択肢に印を付ける。
-    private func choiceIdentifier(for index: Int) -> String {
+    private var identifier: String {
         if ScreenshotFixture.isActive && index == session.current.answerIndex {
             return "choice-correct"
         }
         return "choice-\(index)"
     }
 
-    // MARK: - Feedback helpers
-
     /// 回答後の選択肢の色付け。正解=緑、誤答（選択したもの）=赤。
-    private func tint(for index: Int) -> Color? {
+    private var tint: Color? {
         guard let selected = session.selectedChoice else { return nil }
         if index == session.current.answerIndex { return .green }
         if index == selected { return .red }
         return nil
     }
 
-    private func background(for index: Int) -> Color {
-        if let tint = tint(for: index) {
-            return tint.opacity(0.18)
-        }
-        return Color(.secondarySystemGroupedBackground)
-    }
-
-    private func foreground(for index: Int) -> Color {
-        tint(for: index) ?? .primary
-    }
-
-    private func resultIcon(for index: Int) -> String? {
+    private var resultIcon: String? {
         guard let selected = session.selectedChoice else { return nil }
         if index == session.current.answerIndex { return "checkmark.circle.fill" }
         if index == selected { return "xmark.circle.fill" }
