@@ -11,26 +11,34 @@ struct ResultView: View {
     let session: QuizSession
     let onExit: () -> Void
 
+    var body: some View {
+        // 折りたたみ時や横向きなど縦の高さが足りないときだけスクロールに切り替える。
+        // 外周の余白は、スクロール時だけ contentMargins にしてスクロール領域を端まで広げる。
+        ViewThatFits(in: .vertical) {
+            ResultContent(session: session, onExit: onExit).padding(24)
+            ScrollView { ResultContent(session: session, onExit: onExit) }
+                .contentMargins(24, for: .scrollContent)
+        }
+    }
+}
+
+private struct ResultContent: View {
+    let session: QuizSession
+    let onExit: () -> Void
+    // 大きな飾りと点数も文字サイズの設定に合わせて伸ばす。
+    @ScaledMetric(relativeTo: .largeTitle) private var symbolSize: CGFloat = 72
+    @ScaledMetric(relativeTo: .largeTitle) private var scoreSize: CGFloat = 40
+
     private var ratio: Double {
         session.total == 0 ? 0 : Double(session.correctCount) / Double(session.total)
     }
 
     var body: some View {
-        // 折りたたみ時や横向きなど縦の高さが足りないときだけスクロールに切り替える。
-        // 外周の余白は、スクロール時だけ contentMargins にしてスクロール領域を端まで広げる。
-        ViewThatFits(in: .vertical) {
-            content.padding(24)
-            ScrollView { content }
-                .contentMargins(24, for: .scrollContent)
-        }
-    }
-
-    private var content: some View {
         VStack(spacing: 28) {
             Spacer()
 
             Image(systemName: symbolName)
-                .font(.system(size: 72))
+                .font(.system(size: symbolSize))
                 .foregroundStyle(.indigo)
                 .symbolEffect(.bounce, value: session.id)
 
@@ -41,7 +49,7 @@ struct ResultView: View {
 
             VStack(spacing: 8) {
                 Text("\(session.correctCount) / \(session.total) 問正解")
-                    .font(.system(size: 40, weight: .heavy, design: .rounded))
+                    .font(.system(size: scoreSize, weight: .heavy, design: .rounded))
                     .foregroundStyle(.primary)
 
                 Text(comment)
