@@ -1,0 +1,12 @@
+{
+  "actions": {
+    "Quiz/Views/AdBannerView.swift.updateUIViewController": "UIViewControllerRepresentable の更新。広告の表示処理"
+  },
+  "ui": {
+    "ui-button Quiz/Views/HomeView.swift: Button(action: action) {": "カテゴリカードの選択切り替え。スタートの前の画面内の選択（始めるのは StartMixedQuizIntent）",
+    "ui-button Quiz/Views/QuizView.swift: Button {": "次の問題へ。出題中の手元操作",
+    "ui-button Quiz/Views/QuizView.swift: Button { (2)": "選択肢の回答。出題中の手元操作",
+    "ui-button Quiz/Views/ResultView.swift: Button {": "同じ問題でもう一度。結果画面の中だけの操作",
+    "ui-button Quiz/Views/ResultView.swift: Button { (2)": "ホームに戻る（閉じる）"
+  }
+}

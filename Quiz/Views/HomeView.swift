@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppIntents
 
 struct HomeView: View {
     @State private var selection: Set<QuizCategory> = []
@@ -25,7 +26,7 @@ struct HomeView: View {
 
             ScrollView {
                 VStack(spacing: 24) {
-                    header
+                    HomeHeader()
 
                     VStack(spacing: 16) {
                         ForEach(QuizCategory.allCases) { category in
@@ -38,9 +39,17 @@ struct HomeView: View {
                         }
                     }
 
-                    startButton
+                    StartButton(selection: selection)
 
-                    aiSection
+                    AIQuizSection(
+                        generator: generator,
+                        theme: $aiTheme,
+                        isThemeFocused: $themeFocused,
+                        errorMessage: genError
+                    ) {
+                        // return キー。Intent はボタンからしか呼べないので、Intent と同じ起動要求を直接置く。
+                        launcher.pending = .ai(theme: aiTheme)
+                    }
                 }
                 .readableWidth()
             }
@@ -61,7 +70,7 @@ struct HomeView: View {
         }
         .overlay {
             if generator.isGenerating {
-                loadingOverlay
+                GeneratingOverlay()
             }
         }
         .fullScreenCover(item: $session) { session in
@@ -70,114 +79,6 @@ struct HomeView: View {
         .task { handleLaunch(launcher.pending) }
         .onChange(of: launcher.pending) { _, request in
             handleLaunch(request)
-        }
-    }
-
-    // MARK: - Subviews
-
-    private var header: some View {
-        VStack(spacing: 12) {
-            Image("programming_quiz")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 96)
-                .padding(.top, 24)
-
-            Text("挑戦するジャンルを選んでスタート")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private var startButton: some View {
-        Button {
-            start()
-        } label: {
-            Label("スタート", systemImage: "play.fill")
-                .font(.title3.bold())
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
-        }
-        .buttonStyle(.glassProminent)
-        .tint(.indigo)
-        .foregroundStyle(.white)
-        .accessibilityIdentifier("startButton")
-        .disabled(selection.isEmpty)
-        .opacity(selection.isEmpty ? 0.5 : 1)
-        .animation(.easeInOut, value: selection.isEmpty)
-    }
-
-    private var aiSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("AIにおまかせ出題", systemImage: "sparkles")
-                .font(.headline)
-                .foregroundStyle(.primary)
-
-            // スクリーンショット撮影中は、撮影する Mac で Apple Intelligence が使えるかに左右されないよう、
-            // 利用できる端末での表示に揃える。
-            if QuizGenerator.isAvailable || ScreenshotFixture.isActive {
-                Text("テーマを入力すると、AIがオリジナル問題を作ります。入力したテーマは Apple の Private Cloud Compute で処理されることがあります。問題文・選択肢・正誤は自動生成のため誤りを含むことがあり、正しさは保証されません。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                TextField("例: SwiftUI、再帰、正規表現", text: $aiTheme)
-                    .focused($themeFocused)
-                    .padding(14)
-                    .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
-                    .submitLabel(.go)
-                    .onSubmit { Task { await startAI() } }
-                    .toolbar {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            Spacer()
-                            Button {
-                                Task { await startAI() }
-                            } label: {
-                                Label("問題を作る", systemImage: "wand.and.stars")
-                            }
-                            .disabled(generator.isGenerating)
-                        }
-                    }
-
-                Button {
-                    Task { await startAI() }
-                } label: {
-                    Label("AIで問題を作る", systemImage: "wand.and.stars")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                }
-                .buttonStyle(.glassProminent)
-                .tint(.purple)
-                .foregroundStyle(.white)
-                .disabled(generator.isGenerating)
-            } else {
-                Text("この端末では AI 出題を利用できません。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            if let genError {
-                Text(genError)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var loadingOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.35)
-                .ignoresSafeArea()
-
-            VStack(spacing: 16) {
-                ProgressView()
-                    .controlSize(.large)
-                Text("AIが問題を作成中…")
-                    .font(.headline)
-            }
-            .padding(32)
-            .background(.regularMaterial, in: .rect(cornerRadius: 24))
         }
     }
 
@@ -193,18 +94,18 @@ struct HomeView: View {
         }
     }
 
-    private func start() {
-        let questions = QuizData.questions(for: selection)
+    private func start(_ categories: Set<QuizCategory>) {
+        let questions = QuizData.questions(for: categories)
         guard !questions.isEmpty else { return }
         session = QuizSession(questions: questions)
     }
 
-    private func startAI() async {
+    private func startAI(theme: String) async {
         guard !generator.isGenerating else { return }
         themeFocused = false
         genError = nil
         do {
-            let questions = try await generator.makeQuestions(theme: aiTheme)
+            let questions = try await generator.makeQuestions(theme: theme)
             guard !questions.isEmpty else {
                 genError = "問題を生成できませんでした。もう一度お試しください。"
                 return
@@ -220,11 +121,129 @@ struct HomeView: View {
         guard let request else { return }
         launcher.pending = nil
         switch request {
-        case .category(let category):
-            selection = [category]
-            start()
-        case .ai:
-            Task { await startAI() }
+        case .categories(let categories):
+            selection = categories
+            start(categories)
+        case .ai(let theme):
+            aiTheme = theme
+            Task { await startAI(theme: theme) }
+        }
+    }
+}
+
+private struct HomeHeader: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image("programming_quiz")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 96)
+                .padding(.top, 24)
+
+            Text("挑戦するジャンルを選んでスタート")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct StartButton: View {
+    let selection: Set<QuizCategory>
+    private var isEnabled: Bool { !selection.isEmpty }
+
+    var body: some View {
+        Button(intent: StartMixedQuizIntent(categories: selection)) {
+            Label("スタート", systemImage: "play.fill")
+                .font(.title3.bold())
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+        }
+        .buttonStyle(.glassProminent)
+        .tint(.indigo)
+        .foregroundStyle(.white)
+        .accessibilityIdentifier("startButton")
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.5)
+        .animation(.easeInOut, value: isEnabled)
+    }
+}
+
+private struct AIQuizSection: View {
+    let generator: QuizGenerator
+    @Binding var theme: String
+    var isThemeFocused: FocusState<Bool>.Binding
+    let errorMessage: String?
+    let onGenerate: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("AIにおまかせ出題", systemImage: "sparkles")
+                .font(.headline)
+                .foregroundStyle(.primary)
+
+            // スクリーンショット撮影中は、撮影する Mac で Apple Intelligence が使えるかに左右されないよう、
+            // 利用できる端末での表示に揃える。
+            if QuizGenerator.isAvailable || ScreenshotFixture.isActive {
+                Text("テーマを入力すると、AIがオリジナル問題を作ります。入力したテーマは Apple の Private Cloud Compute で処理されることがあります。問題文・選択肢・正誤は自動生成のため誤りを含むことがあり、正しさは保証されません。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                TextField("例: SwiftUI、再帰、正規表現", text: $theme)
+                    .focused(isThemeFocused)
+                    .padding(14)
+                    .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
+                    .submitLabel(.go)
+                    .onSubmit(onGenerate)
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button(intent: StartAIQuizIntent(theme: theme)) {
+                                Label("問題を作る", systemImage: "wand.and.stars")
+                            }
+                            .disabled(generator.isGenerating)
+                        }
+                    }
+
+                Button(intent: StartAIQuizIntent(theme: theme)) {
+                    Label("AIで問題を作る", systemImage: "wand.and.stars")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                }
+                .buttonStyle(.glassProminent)
+                .tint(.purple)
+                .foregroundStyle(.white)
+                .disabled(generator.isGenerating)
+            } else {
+                Text("この端末では AI 出題を利用できません。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct GeneratingOverlay: View {
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+
+            VStack(spacing: 16) {
+                ProgressView()
+                    .controlSize(.large)
+                Text("AIが問題を作成中…")
+                    .font(.headline)
+            }
+            .padding(32)
+            .background(.regularMaterial, in: .rect(cornerRadius: 24))
         }
     }
 }
