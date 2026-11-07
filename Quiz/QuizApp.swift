@@ -6,12 +6,18 @@
 //
 
 import SwiftUI
+import AppIntents
 import AppTrackingTransparency
 
 @main
 struct QuizApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var hasRequestedTracking = false
+
+    init() {
+        // カテゴリ名入りのフレーズ（「〜で知識編のクイズを始める」）を Siri に覚えてもらう。
+        QuizShortcuts.updateAppShortcutParameters()
+    }
 
     var body: some Scene {
         WindowGroup {
