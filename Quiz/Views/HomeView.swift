@@ -47,7 +47,7 @@ struct HomeView: View {
                         isThemeFocused: $themeFocused,
                         errorMessage: genError
                     ) {
-                        // キーボードの「問題を作る」と return キー。ボタンと同じ経路で始める。
+                        // return キー。Intent はボタンからしか呼べないので、Intent と同じ起動要求を直接置く。
                         launcher.pending = .ai(theme: aiTheme)
                     }
                 }
@@ -197,7 +197,7 @@ private struct AIQuizSection: View {
                     .toolbar {
                         ToolbarItemGroup(placement: .keyboard) {
                             Spacer()
-                            Button(action: onGenerate) {
+                            Button(intent: StartAIQuizIntent(theme: theme)) {
                                 Label("問題を作る", systemImage: "wand.and.stars")
                             }
                             .disabled(generator.isGenerating)

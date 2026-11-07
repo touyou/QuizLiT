@@ -119,28 +119,62 @@ struct StartAIQuizIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        // Apple Intelligence が使えない端末では、アプリを開いても作れないので先に伝える。
+        guard QuizGenerator.isAvailable || ScreenshotFixture.isActive else {
+            throw QuizIntentError.aiUnavailable
+        }
         QuizLauncher.shared.pending = .ai(theme: theme ?? "")
         return .result()
+    }
+}
+
+/// Siri / ショートカットに伝える失敗の理由。
+enum QuizIntentError: Error, CustomLocalizedStringResourceConvertible {
+    case aiUnavailable
+
+    var localizedStringResource: LocalizedStringResource {
+        switch self {
+        case .aiUnavailable:
+            "この端末では AI 出題を利用できません。Apple Intelligence が使える端末でお試しください。"
+        }
     }
 }
 
 // MARK: - App Shortcuts
 
 struct QuizShortcuts: AppShortcutsProvider {
+    static let shortcutTileColor: ShortcutTileColor = .purple
+
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: StartCategoryQuizIntent(),
             phrases: [
                 "\(.applicationName)でクイズを始める",
+                "\(.applicationName)でクイズに挑戦",
+                "\(.applicationName)で問題を出して",
                 "\(.applicationName)で\(\.$category)のクイズを始める",
+                "\(.applicationName)で\(\.$category)に挑戦",
             ],
             shortTitle: "カテゴリ別クイズ",
             systemImageName: "play.fill"
+        )
+        // 3 つのカテゴリを全部混ぜた出題。ホームで全部選んでスタートするのと同じ。
+        AppShortcut(
+            intent: StartMixedQuizIntent(categories: Set(QuizCategory.allCases)),
+            phrases: [
+                "\(.applicationName)で全部のカテゴリからクイズ",
+                "\(.applicationName)でごちゃ混ぜクイズ",
+                "\(.applicationName)でランダムに出題して",
+            ],
+            shortTitle: "全カテゴリで出題",
+            systemImageName: "shuffle"
         )
         AppShortcut(
             intent: StartAIQuizIntent(),
             phrases: [
                 "\(.applicationName)でAIクイズを始める",
+                "\(.applicationName)でAIに問題を作ってもらう",
+                "\(.applicationName)でオリジナル問題に挑戦",
             ],
             shortTitle: "AIクイズ",
             systemImageName: "sparkles"
