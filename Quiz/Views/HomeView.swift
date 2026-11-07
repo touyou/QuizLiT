@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppIntents
 
 struct HomeView: View {
     @State private var selection: Set<QuizCategory> = []
@@ -38,7 +39,7 @@ struct HomeView: View {
                         }
                     }
 
-                    StartButton(isEnabled: !selection.isEmpty, action: start)
+                    StartButton(selection: selection)
 
                     AIQuizSection(
                         generator: generator,
@@ -46,7 +47,8 @@ struct HomeView: View {
                         isThemeFocused: $themeFocused,
                         errorMessage: genError
                     ) {
-                        Task { await startAI() }
+                        // キーボードの「問題を作る」と return キー。ボタンと同じ経路で始める。
+                        launcher.pending = .ai(theme: aiTheme)
                     }
                 }
                 .readableWidth()
@@ -92,18 +94,18 @@ struct HomeView: View {
         }
     }
 
-    private func start() {
-        let questions = QuizData.questions(for: selection)
+    private func start(_ categories: Set<QuizCategory>) {
+        let questions = QuizData.questions(for: categories)
         guard !questions.isEmpty else { return }
         session = QuizSession(questions: questions)
     }
 
-    private func startAI() async {
+    private func startAI(theme: String) async {
         guard !generator.isGenerating else { return }
         themeFocused = false
         genError = nil
         do {
-            let questions = try await generator.makeQuestions(theme: aiTheme)
+            let questions = try await generator.makeQuestions(theme: theme)
             guard !questions.isEmpty else {
                 genError = "問題を生成できませんでした。もう一度お試しください。"
                 return
@@ -119,11 +121,12 @@ struct HomeView: View {
         guard let request else { return }
         launcher.pending = nil
         switch request {
-        case .category(let category):
-            selection = [category]
-            start()
-        case .ai:
-            Task { await startAI() }
+        case .categories(let categories):
+            selection = categories
+            start(categories)
+        case .ai(let theme):
+            aiTheme = theme
+            Task { await startAI(theme: theme) }
         }
     }
 }
@@ -145,11 +148,11 @@ private struct HomeHeader: View {
 }
 
 private struct StartButton: View {
-    let isEnabled: Bool
-    let action: () -> Void
+    let selection: Set<QuizCategory>
+    private var isEnabled: Bool { !selection.isEmpty }
 
     var body: some View {
-        Button(action: action) {
+        Button(intent: StartMixedQuizIntent(categories: selection)) {
             Label("スタート", systemImage: "play.fill")
                 .font(.title3.bold())
                 .frame(maxWidth: .infinity)
@@ -201,7 +204,7 @@ private struct AIQuizSection: View {
                         }
                     }
 
-                Button(action: onGenerate) {
+                Button(intent: StartAIQuizIntent(theme: theme)) {
                     Label("AIで問題を作る", systemImage: "wand.and.stars")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
