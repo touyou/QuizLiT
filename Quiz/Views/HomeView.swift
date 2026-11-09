@@ -14,7 +14,8 @@ struct HomeView: View {
     @State private var generator = QuizGenerator()
     @State private var aiTheme: String = ""
     @State private var genError: String?
-    @State private var adLoaded = false
+    /// nil は読み込み中。読み込み中も 50pt の枠を確保し、失敗したときだけ畳む。
+    @State private var adLoaded: Bool?
     @FocusState private var themeFocused: Bool
 
     private let launcher = QuizLauncher.shared
@@ -61,9 +62,9 @@ struct HomeView: View {
                     AdBannerView(adUnitID: AdUnit.homeBanner) { loaded in
                         withAnimation(.easeInOut) { adLoaded = loaded }
                     }
-                    .frame(height: adLoaded ? 50 : 0)
+                    // 読み込み中も実寸・不透明で置く。高さ 0・透明の枠のままだと SDK から非表示のバナーに見える。
+                    .frame(height: adLoaded == false ? 0 : 50)
                     .frame(maxWidth: .infinity)
-                    .opacity(adLoaded ? 1 : 0)
                     .clipped()
                 }
             }

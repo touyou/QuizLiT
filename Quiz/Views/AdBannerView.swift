@@ -7,6 +7,7 @@
 
 import SwiftUI
 import GoogleMobileAds
+import os
 
 /// バナー広告のユニットID（旧版から流用）。
 enum AdUnit {
@@ -44,6 +45,10 @@ struct AdBannerView: UIViewControllerRepresentable {
         }
 
         func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: any Error) {
+            // 配信中のアプリで広告が出ないとき、no fill か設定の誤りかを Console で見分けるため。
+            let nsError = error as NSError
+            Logger(subsystem: "Quiz", category: "Ads")
+                .error("banner failed: \(nsError.domain, privacy: .public) \(nsError.code) \(nsError.localizedDescription, privacy: .public)")
             onLoaded(false)
         }
     }
