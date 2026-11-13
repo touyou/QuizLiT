@@ -15,41 +15,26 @@ enum AdUnit {
 }
 
 /// 標準バナー（320×50）を表示する SwiftUI ビュー。
-/// 読み込みの成否を `onLoaded` で通知するので、呼び出し側で領域の表示/非表示を制御できる。
 struct AdBannerView: UIViewControllerRepresentable {
     let adUnitID: String
-    var onLoaded: (Bool) -> Void = { _ in }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onLoaded: onLoaded)
+        Coordinator()
     }
 
     func makeUIViewController(context: Context) -> BannerViewController {
         BannerViewController(adUnitID: adUnitID, delegate: context.coordinator)
     }
 
-    func updateUIViewController(_ uiViewController: BannerViewController, context: Context) {
-        context.coordinator.onLoaded = onLoaded
-    }
+    func updateUIViewController(_ uiViewController: BannerViewController, context: Context) {}
 
-    /// バナーの読み込み結果を SwiftUI 側へ橋渡しするデリゲート。
+    /// 読み込みの失敗を記録するだけのデリゲート。枠の大きさは結果で変えない。
     final class Coordinator: NSObject, BannerViewDelegate {
-        var onLoaded: (Bool) -> Void
-
-        init(onLoaded: @escaping (Bool) -> Void) {
-            self.onLoaded = onLoaded
-        }
-
-        func bannerViewDidReceiveAd(_ bannerView: BannerView) {
-            onLoaded(true)
-        }
-
         func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: any Error) {
             // 配信中のアプリで広告が出ないとき、no fill か設定の誤りかを Console で見分けるため。
             let nsError = error as NSError
             Logger(subsystem: "Quiz", category: "Ads")
                 .error("banner failed: \(nsError.domain, privacy: .public) \(nsError.code) \(nsError.localizedDescription, privacy: .public)")
-            onLoaded(false)
         }
     }
 }
