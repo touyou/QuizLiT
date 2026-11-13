@@ -14,8 +14,6 @@ struct HomeView: View {
     @State private var generator = QuizGenerator()
     @State private var aiTheme: String = ""
     @State private var genError: String?
-    /// nil は読み込み中。読み込み中も 50pt の枠を確保し、失敗したときだけ畳む。
-    @State private var adLoaded: Bool?
     @FocusState private var themeFocused: Bool
 
     private let launcher = QuizLauncher.shared
@@ -57,15 +55,18 @@ struct HomeView: View {
             .contentMargins(24, for: .scrollContent)
             .scrollDismissesKeyboard(.interactively)
             .safeAreaInset(edge: .bottom) {
-                // ATT の回答が出て SDK を起動するまでバナーを置かない（撮影中は起動しない）。
-                if ads.isStarted {
-                    AdBannerView(adUnitID: AdUnit.homeBanner) { loaded in
-                        withAnimation(.easeInOut) { adLoaded = loaded }
+                // AdMob は広告枠の大きさを読み込み結果で変えるコードを「広告コードの改変」として配信を制限する。
+                // 枠は 320x50 のまま変えず、ATT の回答前（SDK 起動前）は空けておくだけにする。撮影中は枠も置かない。
+                if !ScreenshotFixture.isActive {
+                    Group {
+                        if ads.isStarted {
+                            AdBannerView(adUnitID: AdUnit.homeBanner)
+                        } else {
+                            Color.clear
+                        }
                     }
-                    // 読み込み中も実寸・不透明で置く。高さ 0・透明の枠のままだと SDK から非表示のバナーに見える。
-                    .frame(height: adLoaded == false ? 0 : 50)
+                    .frame(width: 320, height: 50)
                     .frame(maxWidth: .infinity)
-                    .clipped()
                 }
             }
         }
