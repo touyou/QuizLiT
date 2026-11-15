@@ -8,7 +8,6 @@
 //
 
 import Observation
-import UIKit
 import UserMessagingPlatform
 import os
 
@@ -36,9 +35,10 @@ final class ConsentManager {
         }
         #endif
 
+        // 表示元に nil を渡すと、UMP が表示する瞬間の最前面の画面を使う（読み込み中に画面が変わっても出せる）。
         do {
             try await ConsentInformation.shared.requestConsentInfoUpdate(with: parameters)
-            try await ConsentForm.loadAndPresentIfRequired(from: Self.topViewController())
+            try await ConsentForm.loadAndPresentIfRequired(from: nil)
         } catch {
             Self.logger.error("consent: \(error.localizedDescription, privacy: .public)")
         }
@@ -48,7 +48,7 @@ final class ConsentManager {
     /// 同意の変更・撤回のフォームを出す。
     func presentPrivacyOptionsForm() async {
         do {
-            try await ConsentForm.presentPrivacyOptionsForm(from: Self.topViewController())
+            try await ConsentForm.presentPrivacyOptionsForm(from: nil)
         } catch {
             Self.logger.error("privacy options: \(error.localizedDescription, privacy: .public)")
         }
@@ -61,14 +61,4 @@ final class ConsentManager {
     }
 
     private static let logger = Logger(subsystem: "Quiz", category: "Ads")
-
-    private static func topViewController() -> UIViewController? {
-        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        let scene = scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
-        var top = scene?.keyWindow?.rootViewController
-        while let presented = top?.presentedViewController {
-            top = presented
-        }
-        return top
-    }
 }

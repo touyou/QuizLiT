@@ -55,6 +55,10 @@ struct QuizApp: App {
                 }
             }
             AdsStartup.shared.start()
+            // 同意情報を取れなかった（通信できない等）ときは、次に前面へ来たとき聞き直す。
+            if !ConsentManager.shared.canRequestAds {
+                hasRequestedTracking = false
+            }
         }
     }
 }

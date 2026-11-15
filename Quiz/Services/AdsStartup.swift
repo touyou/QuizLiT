@@ -5,6 +5,7 @@
 //  広告 SDK を同意（UMP）と ATT の結果が出てから起動するための共有状態。
 //
 
+import AppTrackingTransparency
 import GoogleMobileAds
 import Observation
 
@@ -18,9 +19,11 @@ final class AdsStartup {
 
     private(set) var isStarted = false
 
-    /// 同意が取れていれば起動する。同意の変更後にも呼ぶので何度呼んでもよい。
+    /// 同意が取れていて ATT の回答も出ていれば起動する。同意の変更後にも呼ぶので何度呼んでもよい。
     func start() {
-        guard !isStarted, ConsentManager.shared.canRequestAds else { return }
+        guard !isStarted,
+              ConsentManager.shared.canRequestAds,
+              ATTrackingManager.trackingAuthorizationStatus != .notDetermined else { return }
         MobileAds.shared.start(completionHandler: nil)
         isStarted = true
     }
