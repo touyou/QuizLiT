@@ -49,6 +49,8 @@ struct HomeView: View {
                         // return キー。Intent はボタンからしか呼べないので、Intent と同じ起動要求を直接置く。
                         launcher.pending = .ai(theme: aiTheme)
                     }
+
+                    PrivacyOptionsButton()
                 }
                 .readableWidth()
             }
@@ -145,6 +147,27 @@ private struct HomeHeader: View {
             Text("挑戦するジャンルを選んでスタート")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// EEA・英国など、広告の同意を変えられる必要がある地域でだけ出す。
+private struct PrivacyOptionsButton: View {
+    private let consent = ConsentManager.shared
+
+    var body: some View {
+        if consent.isPrivacyOptionsRequired {
+            Button {
+                Task {
+                    await consent.presentPrivacyOptionsForm()
+                    AdsStartup.shared.start()
+                }
+            } label: {
+                Label("広告のプライバシー設定", systemImage: "hand.raised")
+                    .font(.footnote)
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
         }
     }
 }
