@@ -17,6 +17,7 @@ struct QuizApp: App {
     init() {
         // カテゴリ名入りのフレーズ（「〜で知識編のクイズを始める」）を Siri に覚えてもらう。
         QuizShortcuts.updateAppShortcutParameters()
+        ReviewPrompt.recordLaunch()
     }
 
     var body: some Scene {
