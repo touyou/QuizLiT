@@ -5,11 +5,13 @@
 //  正解数と評価コメントを表示する結果画面。
 //
 
+import StoreKit
 import SwiftUI
 
 struct ResultView: View {
     let session: QuizSession
     let onExit: () -> Void
+    @Environment(\.requestReview) private var requestReview
 
     var body: some View {
         // 折りたたみ時や横向きなど縦の高さが足りないときだけスクロールに切り替える。
@@ -18,6 +20,13 @@ struct ResultView: View {
             ResultContent(session: session, onExit: onExit).padding(24)
             ScrollView { ResultContent(session: session, onExit: onExit) }
                 .contentMargins(24, for: .scrollContent)
+        }
+        // よくできた回だけ、結果を見てもらってから頼む
+        .task(id: session.id) {
+            guard !ScreenshotFixture.isActive, session.total > 0,
+                  session.correctCount * 10 >= session.total * 8 else { return }
+            try? await Task.sleep(for: .seconds(1))
+            if !Task.isCancelled, ReviewPrompt.recordAchievement() { requestReview() }
         }
     }
 }
