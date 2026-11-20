@@ -50,7 +50,7 @@ struct HomeView: View {
                         launcher.pending = .ai(theme: aiTheme)
                     }
 
-                    PrivacyOptionsButton()
+                    AboutButton()
                 }
                 .readableWidth()
             }
@@ -151,23 +151,22 @@ private struct HomeHeader: View {
     }
 }
 
-/// EEA・英国など、広告の同意を変えられる必要がある地域でだけ出す。
-private struct PrivacyOptionsButton: View {
-    private let consent = ConsentManager.shared
+/// 情報画面（バージョン・評価・プライバシーポリシーなど）の入口。広告のプライバシー設定もこの中にある。
+private struct AboutButton: View {
+    @State private var isShowingAbout = false
 
     var body: some View {
-        if consent.isPrivacyOptionsRequired {
-            Button {
-                Task {
-                    await consent.presentPrivacyOptionsForm()
-                    AdsStartup.shared.start()
-                }
-            } label: {
-                Label("広告のプライバシー設定", systemImage: "hand.raised")
-                    .font(.footnote)
-            }
-            .buttonStyle(.borderless)
-            .foregroundStyle(.secondary)
+        Button {
+            isShowingAbout = true
+        } label: {
+            Label("このアプリについて", systemImage: "info.circle")
+                .font(.footnote)
+        }
+        .buttonStyle(.borderless)
+        .foregroundStyle(.secondary)
+        .accessibilityIdentifier("aboutButton")
+        .sheet(isPresented: $isShowingAbout) {
+            AboutView()
         }
     }
 }
