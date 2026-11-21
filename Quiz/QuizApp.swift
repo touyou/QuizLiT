@@ -17,12 +17,14 @@ struct QuizApp: App {
     init() {
         // カテゴリ名入りのフレーズ（「〜で知識編のクイズを始める」）を Siri に覚えてもらう。
         QuizShortcuts.updateAppShortcutParameters()
+        WhatsNew.prepareOnLaunch()
         ReviewPrompt.recordLaunch()
     }
 
     var body: some Scene {
         WindowGroup {
             HomeView()
+                .whatsNewOnUpdate()
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             // ATT の許可ダイアログはアプリが前面(active)のときのみ表示できる。
