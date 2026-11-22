@@ -20,12 +20,24 @@ struct AboutView: View {
                 Section("フィードバック") {
                     AboutLinkRow(title: "アプリを評価", systemImage: "star", destination: AppLinks.writeReview)
                     AboutLinkRow(title: "機能要望・不具合報告", systemImage: "envelope", destination: AppLinks.support)
-                    ShareLink(item: AppLinks.appStore) {
+                    ShareLink(
+                        item: AppLinks.appStore,
+                        subject: Text(verbatim: "Programming Quiz"),
+                        message: Text("プログラミングの知識、クイズで試してみない？すきま時間に遊べる「Programming Quiz」です。")
+                    ) {
                         Label("アプリを共有", systemImage: "square.and.arrow.up")
                     }
                 }
 
                 Section {
+                    // お知らせを出した版がまだ無いあいだは、行も出さない
+                    if !WhatsNew.releases.isEmpty {
+                        NavigationLink {
+                            WhatsNewHistoryView()
+                        } label: {
+                            Label("新機能", systemImage: "sparkles")
+                        }
+                    }
                     AboutLinkRow(title: "開発者について", systemImage: "person", destination: AppLinks.developer)
                 }
 
@@ -63,7 +75,7 @@ private struct AboutHeader: View {
             Text("バージョン \(AppLinks.version)")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text("日本で個人が開発しています。")
+            Text("日本で開発しています。")
                 .font(.footnote)
                 .padding(.top, 4)
         }

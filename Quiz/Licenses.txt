@@ -1,7 +1,19 @@
-このアプリは次のソフトウェアを使っています。
-This app uses the following software.
+Google Mobile Ads SDK
+Google の利用規約 / Google Terms of Service
 
-Google Mobile Ads SDK / Google User Messaging Platform SDK
 Copyright Google LLC
+
 Google の利用規約に従って使用しています。
 Used under Google's terms of service.
+
+https://developers.google.com/admob/terms
+=====
+Google User Messaging Platform SDK
+Google の利用規約 / Google Terms of Service
+
+Copyright Google LLC
+
+Google の利用規約に従って使用しています。
+Used under Google's terms of service.
+
+https://developers.google.com/admob/terms
